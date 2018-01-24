@@ -17,6 +17,7 @@ deb http://dk.archive.ubuntu.com/ubuntu/ trusty-updates main universe
 
 Install with the following commands:
 ```
+sudo apt-get update
 sudo apt-get install gcc-4.4 g++-4.4
 sudo apt-get install gcc-4.7 g++-4.7
 
