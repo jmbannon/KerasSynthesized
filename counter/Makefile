@@ -1,7 +1,10 @@
-SOURCE_FILES  := counter.cpp
+SOURCE_MAIN   := counter.cpp
+TEST_MAIN     := test_main.cpp
+SOURCE_FILES  := 
+
 HLS_CXX_FLAGS := 
 CXX := i++
-override CXXFLAGS := $(CXXFLAGS) -I/usr/include/c++/4.4.7 -I/usr/include/c++/4.4.7/x86_64-linux-gnu -L/home/jb/intelFPGA_lite/17.1/hls/linux64/lib/dspba/linux64
+override CXXFLAGS := $(CXXFLAGS) -I/usr/local/hdf5/include -I/usr/include/c++/4.4.7 -I/usr/include/c++/4.4.7/x86_64-linux-gnu -L/home/jb/intelFPGA_lite/17.1/hls/linux64/lib/dspba/linux64 -L/usr/local/hdf5/lib -lhdf5_hl -lhdf5 
 VERBOSE := 1
 
 # OS-dependant tools
@@ -36,8 +39,8 @@ test-gpp: $(SOURCE_FILES)
 # Run the testbench and the component as a regular program
 .PHONY: test-x86-64
 test-x86-64: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
-test-x86-64: $(SOURCE_FILES)
-	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(CXXFLAGS)
+test-x86-64: $(SOURCE_FILES) $(TEST_MAIN)
+	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(TEST_MAIN) $(CXXFLAGS)
 	@echo "+----------------------------------------+"
 	@echo "| Run ./test-x86-64 to execute the test. |"
 	@echo "+----------------------------------------+"
