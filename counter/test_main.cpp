@@ -1,7 +1,6 @@
 #include "HLS/hls.h"
 #include <stdio.h>
 #include <math.h>
-#include <hdf5.h>
 #include "tensor3.hpp"
 
 #define SIZE 24
@@ -37,8 +36,8 @@ int main() {
   }
   printf("\n\n\n");
 
-  hid_t file1;
-  file1 = H5Fopen("../dependencies/frugally-deep/small.h5", H5F_ACC_RDWR, H5P_DEFAULT);
+
+  
   return 0;
 }
 

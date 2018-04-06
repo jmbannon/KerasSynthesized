@@ -4,7 +4,7 @@ SOURCE_FILES  :=
 
 HLS_CXX_FLAGS := 
 CXX := i++
-override CXXFLAGS := $(CXXFLAGS) -I/usr/local/hdf5/include -I/usr/include/c++/4.4.7 -I/usr/include/c++/4.4.7/x86_64-linux-gnu -L/home/jb/intelFPGA_lite/17.1/hls/linux64/lib/dspba/linux64 -L/usr/local/hdf5/lib -lhdf5_hl -lhdf5 
+override CXXFLAGS := $(CXXFLAGS) -I/usr/include/c++/4.4.7 -I/usr/include/c++/4.4.7/x86_64-linux-gnu -L/home/jb/intelFPGA_lite/17.1/hls/linux64/lib/dspba/linux64
 VERBOSE := 1
 
 # OS-dependant tools
