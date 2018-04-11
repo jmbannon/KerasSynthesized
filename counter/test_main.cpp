@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "tensor3.hpp"
+#include "convolution.hpp"
 
 #define SIZE 24
 
@@ -15,13 +16,13 @@ int main() {
   tensor3 t_row, t_col, t_dep;
 
   ret = tensor3_init(&t_row, 4, 2, 3, ROW_MAJ);
-  tensor3_init_data(&t_row, data);
+  tensor3_set_data(&t_row, data);
 
   ret = tensor3_init(&t_col, 4, 2, 3, COL_MAJ);
-  tensor3_init_data(&t_col, data);
+  tensor3_set_data(&t_col, data);
 
   ret = tensor3_init(&t_dep, 4, 2, 3, DEP_MAJ);
-  tensor3_init_data(&t_dep, data);
+  tensor3_set_data(&t_dep, data);
 
   for (int i = 0; i < t_row.vol; i++) {
     printf("%f ", t_row.data[i]);
@@ -36,8 +37,9 @@ int main() {
   }
   printf("\n\n\n");
 
-
+  test_convolution();
   
+
   return 0;
 }
 
