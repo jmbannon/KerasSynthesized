@@ -9,6 +9,26 @@ from collections import Counter
 
 import types
 
+def to_cpp_tensor(readable_tensor, strip_channels=True):
+	tensor = readable_tensor
+	if isinstance(readable_tensor, list):
+		tensor = readable_tensor[0]
+
+	if strip_channels and len(tensor.shape) == 4 and tensor.shape[0] == 1:
+		tensor = tensor[0]
+
+	declaration = 'Numeric tensor' + str(tensor.shape)
+	declaration = declaration.replace('(', '[')
+	declaration = declaration.replace(', ', '][')
+	declaration = declaration.replace(')', ']')
+
+	tstr = str(repr(tensor))
+	tstr = tstr.replace(')', '')
+	tstr = tstr.replace('array(', '')
+	tstr = tstr.replace('[', '{')
+	tstr = tstr.replace(']', '}')
+
+	return '{} =\n      {};'.format(declaration, tstr)
 
 def list_lambda(func, value):
 	if isinstance(value, list):
@@ -164,8 +184,9 @@ model = Sequential()
 weights = test_weights
 # weights = to_keras_tensor(readable_test_weights)
 
-print(test_weights)
-print(to_keras_weight(readable_test_weights))
+print(to_cpp_tensor(readable_test_weights))
+print(to_cpp_tensor(readable_input))
+# print(to_keras_weight(readable_test_weights))
 test_layer = Conv2D(2, (3, 3), input_shape=(5, 5, 3), weights=weights, use_bias=False, name='conv')
 # test_layer.set_weights(test_weights_2)
 
