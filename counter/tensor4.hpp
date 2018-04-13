@@ -16,6 +16,11 @@
 #define T4_DEP_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((ch) * (t)->depth) + (dep))
 #define T4_DEP_MAJ_VAL(t, row, col, dep, ch) ((t)->data[T4_DEP_MAJ_IDX((t), (row), (col), (dep))])
 
+// CHAN-DEP-ROW-COL
+// ((col * t->rows * t->chans * t->depth) + (row * t->chans * t->depth) + (dep * t->chans) + ch
+#define T4_CHN_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((dep) * (t)->chans) + (ch))
+#define T4_CHN_MAJ_VAL(t, row, col, dep, ch) ((t)->data[T4_DEP_MAJ_IDX((t), (row), (col), (dep))])
+
 typedef struct tensor4_ {
   Numeric *data;
 
@@ -80,6 +85,34 @@ int tensor4_set_data(tensor4 *t, Numeric *data) {
     default:
       return 1;
   }
+}
+
+inline uint tensor4_idx(tensor4 *t, uint row, uint col, uint dep, uint ch) {
+  switch(t->maj) {
+    case ROW_MAJ: return T4_ROW_MAJ_IDX(t, row, col, dep, ch);
+    case DEP_MAJ: return T4_DEP_MAJ_IDX(t, row, col, dep, ch);
+    case CHN_MAJ: return T4_CHN_MAJ_IDX(t, row, col, dep, ch);
+    default: printf("ERROR! GET LIBRARY\n"); return 0;
+  }
+}
+
+inline Numeric tensor4_val(tensor4 *t, uint row, uint col, uint dep, uint ch) {
+  return t->data[tensor4_idx(t, row, col, dep, ch)];
+}
+
+void tensor4_print(tensor4 *t) {
+	for (uint c = 0; c < t->chans; c++) {
+	  for (uint i = 0; i < t->depth; i++) {
+	    for (uint j = 0; j < t->rows; j++) {
+	      for (uint k = 0; k < t->cols; k++) {
+	        printf("%f, ", tensor4_val(t, j, k, i, c));
+	      }
+	      printf("\n");
+	    }
+	    printf("\n");
+	  }
+	  printf("\n");
+	}
 }
 
 #endif

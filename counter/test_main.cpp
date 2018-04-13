@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "tensor3.hpp"
-#include "kernel.hpp"
+#include "tensor4.hpp"
 #include "convolution.hpp"
 
 #define SIZE 24
@@ -76,22 +76,22 @@ int test_tensor4() {
   for (int i = 0; i < t_row.size; i++) {
     printf("%f ", t_row.data[i]);
   }
-  // printf("\nrow indexed:\n");
-  // tensor4_print(&t_row);
+  printf("\nrow indexed:\n");
+  tensor4_print(&t_row);
 
   printf("\ndep linear:\n");
   for (int i = 0; i < t_dep.size; i++) {
     printf("%f ", t_dep.data[i]);
   }
-  // printf("\ncol indexed:\n");
-  // tensor4_print(&t_col);
+  printf("\ndep indexed:\n");
+  tensor4_print(&t_dep);
 
   printf("\nchan linear:\n");
   for (int i = 0; i < t_chn.size; i++) {
     printf("%f ", t_chn.data[i]);
   }
-  // printf("\ndep indexed:\n");
-  // tensor3_print(&t_dep);
+  printf("\nchan indexed:\n");
+  tensor4_print(&t_dep);
 
   printf("\n\n\n");  
 
