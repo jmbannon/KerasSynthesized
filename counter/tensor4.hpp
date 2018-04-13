@@ -3,21 +3,22 @@
 
 #include "HLS/hls.h"
 #include "tensor3.hpp"
+#include "common.hpp"
 #include <stdio.h>
 #include <math.h>
 
 
 // ROW-COL-DEP-CHAN
-#define T4_ROW_MAJ_IDX(t, row, col, dep, ch) (((ch) * (t)->depth * (t)->rows * (t)->cols) + ((dep) * (t)->rows * (t)->cols) + ((row) * (t)->cols) + (col))
-#define T4_ROW_MAJ_VAL(t, row, col, dep, ch) ((t)->data[T4_ROW_MAJ_IDX((t), (row), (col), (dep), (ch))])
+#define ROW4_MAJ_IDX(t, row, col, dep, ch) (((ch) * (t)->depth * (t)->rows * (t)->cols) + ((dep) * (t)->rows * (t)->cols) + ((row) * (t)->cols) + (col))
+#define ROW4_MAJ_VAL(t, row, col, dep, ch) ((t)->data[ROW4_MAJ_IDX((t), (row), (col), (dep), (ch))])
 
 // DEP-CHAN-ROW-COL
-#define T4_DEP_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((ch) * (t)->depth) + (dep))
-#define T4_DEP_MAJ_VAL(t, row, col, dep, ch) ((t)->data[T4_DEP_MAJ_IDX((t), (row), (col), (dep))])
+#define DEP4_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((ch) * (t)->depth) + (dep))
+#define DEP4_MAJ_VAL(t, row, col, dep, ch) ((t)->data[DEP4_MAJ_IDX((t), (row), (col), (dep))])
 
 // CHAN-DEP-ROW-COL
-#define T4_CHN_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((dep) * (t)->chans) + (ch))
-#define T4_CHN_MAJ_VAL(t, row, col, dep, ch) ((t)->data[T4_DEP_MAJ_IDX((t), (row), (col), (dep))])
+#define CHN4_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((dep) * (t)->chans) + (ch))
+#define CHN4_MAJ_VAL(t, row, col, dep, ch) ((t)->data[DEP4_MAJ_IDX((t), (row), (col), (dep))])
 
 typedef struct tensor4_ {
   Numeric *data;
@@ -63,7 +64,7 @@ int tensor4_set_data(tensor4 *t, Numeric *data) {
         for (uint j = 0; j < t->cols; j++) {
           for (uint k = 0; k < t->chans; k++) {
           	for (uint l = 0; l < t->depth; l++) {
-              t->data[idx++] = data[T4_ROW_MAJ_IDX(t, i, j, l, k)];
+              t->data[idx++] = data[ROW4_MAJ_IDX(t, i, j, l, k)];
         	}
           }
         }
@@ -74,7 +75,7 @@ int tensor4_set_data(tensor4 *t, Numeric *data) {
         for (uint j = 0; j < t->cols; j++) {
           for (uint k = 0; k < t->depth; k++) {
           	for (uint l = 0; l < t->chans; l++) {
-              t->data[idx++] = data[T4_ROW_MAJ_IDX(t, i, j, k, l)];
+              t->data[idx++] = data[ROW4_MAJ_IDX(t, i, j, k, l)];
         	}
           }
         }
@@ -87,9 +88,9 @@ int tensor4_set_data(tensor4 *t, Numeric *data) {
 
 inline uint tensor4_idx(tensor4 *t, uint row, uint col, uint dep, uint ch) {
   switch(t->maj) {
-    case ROW_MAJ: return T4_ROW_MAJ_IDX(t, row, col, dep, ch);
-    case DEP_MAJ: return T4_DEP_MAJ_IDX(t, row, col, dep, ch);
-    case CHN_MAJ: return T4_CHN_MAJ_IDX(t, row, col, dep, ch);
+    case ROW_MAJ: return ROW4_MAJ_IDX(t, row, col, dep, ch);
+    case DEP_MAJ: return DEP4_MAJ_IDX(t, row, col, dep, ch);
+    case CHN_MAJ: return CHN4_MAJ_IDX(t, row, col, dep, ch);
     default: printf("ERROR! GET LIBRARY\n"); return 0;
   }
 }

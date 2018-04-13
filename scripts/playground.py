@@ -9,10 +9,13 @@ from collections import Counter
 
 import types
 
-def to_cpp_tensor(readable_tensor, strip_channels=True):
+def to_cpp_tensor(readable_tensor, is_bias=False, strip_channels=False):
 	tensor = readable_tensor
 	if isinstance(readable_tensor, list):
-		tensor = readable_tensor[0]
+		if is_bias:
+			tensor = readable_tensor[1]
+		else:
+			tensor = readable_tensor[0]
 
 	if strip_channels and len(tensor.shape) == 4 and tensor.shape[0] == 1:
 		tensor = tensor[0]
@@ -20,6 +23,7 @@ def to_cpp_tensor(readable_tensor, strip_channels=True):
 	declaration = 'Numeric tensor' + str(tensor.shape)
 	declaration = declaration.replace('(', '[')
 	declaration = declaration.replace(', ', '][')
+	declaration = declaration.replace(',', '')
 	declaration = declaration.replace(')', ']')
 
 	tstr = str(repr(tensor))
@@ -27,8 +31,10 @@ def to_cpp_tensor(readable_tensor, strip_channels=True):
 	tstr = tstr.replace('array(', '')
 	tstr = tstr.replace('[', '{')
 	tstr = tstr.replace(']', '}')
+	tstr = tstr.replace(', dtype=float32', '')
 
 	return '{} =\n      {};'.format(declaration, tstr)
+
 
 def list_lambda(func, value):
 	if isinstance(value, list):
@@ -182,12 +188,13 @@ readable_test_weights = [np.array(
 model = Sequential()
 # weights = [np.ones((3, 3, 3, 1))]
 weights = test_weights
+weights.append(np.array([0, 1]))
 # weights = to_keras_tensor(readable_test_weights)
 
 print(to_cpp_tensor(readable_test_weights))
 print(to_cpp_tensor(readable_input))
 # print(to_keras_weight(readable_test_weights))
-test_layer = Conv2D(2, (3, 3), input_shape=(5, 5, 3), weights=weights, use_bias=False, name='conv')
+test_layer = Conv2D(2, (3, 3), input_shape=(5, 5, 3), weights=weights, use_bias=True, name='conv')
 # test_layer.set_weights(test_weights_2)
 
 # print(test_layer.get_weights())
@@ -197,6 +204,9 @@ test_layer = Conv2D(2, (3, 3), input_shape=(5, 5, 3), weights=weights, use_bias=
 
 model.add(test_layer)
 model.compile(optimizer='sgd', loss='mean_squared_error')
+
+# print(test_layer.get_weights())
+print(to_cpp_tensor(test_layer.get_weights(), is_bias=True))
 
 out = model.predict(to_keras_tensor(readable_input))
 

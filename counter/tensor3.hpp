@@ -2,24 +2,21 @@
 #define TENSOR3_HPP
 
 #include "HLS/hls.h"
+#include "common.hpp"
 #include <stdio.h>
 #include <math.h>
 
-typedef float Numeric;
-
-enum Major { ROW_MAJ, COL_MAJ, DEP_MAJ, CHN_MAJ };
-
 // ROW-COL-DEP
-#define ROW_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((row) * (t)->cols) + (col))
-#define ROW_MAJ_VAL(t, row, col, dep) ((t)->data[ROW_MAJ_IDX((t), (row), (col), (dep))])
+#define ROW3_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((row) * (t)->cols) + (col))
+#define ROW3_MAJ_VAL(t, row, col, dep) ((t)->data[ROW3_MAJ_IDX((t), (row), (col), (dep))])
 
 // COL-ROW-DEP
-#define COL_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((col) * (t)->rows) + (row))
-#define COL_MAJ_VAL(t, row, col, dep) ((t)->data[COL_MAJ_IDX((t), (row), (col), (dep))])
+#define COL3_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((col) * (t)->rows) + (row))
+#define COL3_MAJ_VAL(t, row, col, dep) ((t)->data[COL3_MAJ_IDX((t), (row), (col), (dep))])
 
 // DEP-ROW-COL
-#define DEP_MAJ_IDX(t, row, col, dep) (((row) * (t)->cols * (t)->depth) + ((col) * (t)->depth) + (dep))
-#define DEP_MAJ_VAL(t, row, col, dep) ((t)->data[DEP_MAJ_IDX((t), (row), (col), (dep))])
+#define DEP3_MAJ_IDX(t, row, col, dep) (((row) * (t)->cols * (t)->depth) + ((col) * (t)->depth) + (dep))
+#define DEP3_MAJ_VAL(t, row, col, dep) ((t)->data[DEP3_MAJ_IDX((t), (row), (col), (dep))])
 
 using namespace ihc;
 
@@ -77,7 +74,7 @@ int tensor3_set_data(tensor3 *t, Numeric *data) {
       for (uint i = 0; i < t->depth; i++) {
         for (uint j = 0; j < t->cols; j++) {
           for (uint k = 0; k < t->rows; k++) {
-            t->data[idx++] = data[ROW_MAJ_IDX(t, k, j, i)];
+            t->data[idx++] = data[ROW3_MAJ_IDX(t, k, j, i)];
           }
         }
       }
@@ -87,7 +84,7 @@ int tensor3_set_data(tensor3 *t, Numeric *data) {
       for (uint i = 0; i < t->rows; i++) {
         for (uint j = 0; j < t->cols; j++) {
           for (uint k = 0; k < t->depth; k++) {
-            t->data[idx++] = data[ROW_MAJ_IDX(t, i, j, k)];
+            t->data[idx++] = data[ROW3_MAJ_IDX(t, i, j, k)];
           }
         }
       }
@@ -99,9 +96,9 @@ int tensor3_set_data(tensor3 *t, Numeric *data) {
 
 inline uint tensor3_idx(tensor3 *t, uint row, uint col, uint dep) {
   switch(t->maj) {
-    case ROW_MAJ: return ROW_MAJ_IDX(t, row, col, dep);
-    case COL_MAJ: return COL_MAJ_IDX(t, row, col, dep);
-    case DEP_MAJ: return DEP_MAJ_IDX(t, row, col, dep);
+    case ROW_MAJ: return ROW3_MAJ_IDX(t, row, col, dep);
+    case COL_MAJ: return COL3_MAJ_IDX(t, row, col, dep);
+    case DEP_MAJ: return DEP3_MAJ_IDX(t, row, col, dep);
     default: printf("ERROR! GET LIBRARY\n"); return 0;
   }
 }
