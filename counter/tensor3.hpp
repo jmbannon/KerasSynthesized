@@ -9,13 +9,15 @@ typedef float Numeric;
 
 enum Major { ROW_MAJ, COL_MAJ, DEP_MAJ, CHN_MAJ };
 
+// ROW-COL-DEP
 #define ROW_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((row) * (t)->cols) + (col))
 #define ROW_MAJ_VAL(t, row, col, dep) ((t)->data[ROW_MAJ_IDX((t), (row), (col), (dep))])
 
+// COL-ROW-DEP
 #define COL_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((col) * (t)->rows) + (row))
 #define COL_MAJ_VAL(t, row, col, dep) ((t)->data[COL_MAJ_IDX((t), (row), (col), (dep))])
 
-// dep-maj is followed by 2d row-maj
+// DEP-ROW-COL
 #define DEP_MAJ_IDX(t, row, col, dep) (((row) * (t)->cols * (t)->depth) + ((col) * (t)->depth) + (dep))
 #define DEP_MAJ_VAL(t, row, col, dep) ((t)->data[DEP_MAJ_IDX((t), (row), (col), (dep))])
 
