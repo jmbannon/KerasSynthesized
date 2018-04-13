@@ -12,12 +12,10 @@
 #define T4_ROW_MAJ_VAL(t, row, col, dep, ch) ((t)->data[T4_ROW_MAJ_IDX((t), (row), (col), (dep), (ch))])
 
 // DEP-CHAN-ROW-COL
-// ((col * t->rows * t->chans * t->depth) + (row * t->chans * t->depth) + (dep * t->chans) + ch
 #define T4_DEP_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((ch) * (t)->depth) + (dep))
 #define T4_DEP_MAJ_VAL(t, row, col, dep, ch) ((t)->data[T4_DEP_MAJ_IDX((t), (row), (col), (dep))])
 
 // CHAN-DEP-ROW-COL
-// ((col * t->rows * t->chans * t->depth) + (row * t->chans * t->depth) + (dep * t->chans) + ch
 #define T4_CHN_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((dep) * (t)->chans) + (ch))
 #define T4_CHN_MAJ_VAL(t, row, col, dep, ch) ((t)->data[T4_DEP_MAJ_IDX((t), (row), (col), (dep))])
 

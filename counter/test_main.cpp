@@ -48,9 +48,6 @@ int test_tensor3() {
 
   printf("\n\n\n");
 
-  test_convolution();
-  
-
   return 0;
 }
 
@@ -99,7 +96,8 @@ int test_tensor4() {
 }
 
 int main() {
-  test_tensor4();
+  // test_tensor4();
+  test_convolution();
   return 0;
 }
 
