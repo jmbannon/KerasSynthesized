@@ -24,17 +24,27 @@ int main() {
   ret = tensor3_init(&t_dep, 4, 2, 3, DEP_MAJ);
   tensor3_set_data(&t_dep, data);
 
+  printf("row linear:\n");
   for (int i = 0; i < t_row.vol; i++) {
     printf("%f ", t_row.data[i]);
   }
-  printf("\n");
+  printf("\nrow indexed:\n");
+  tensor3_print(&t_row);
+
+  printf("\ncol linear:");
   for (int i = 0; i < t_col.vol; i++) {
     printf("%f ", t_col.data[i]);
   }
-  printf("\n");
+  printf("\ncol indexed:\n");
+  tensor3_print(&t_col);
+
+  printf("\ndep linear:");
   for (int i = 0; i < t_dep.vol; i++) {
     printf("%f ", t_dep.data[i]);
   }
+  printf("\ndep indexed:\n");
+  tensor3_print(&t_dep);
+
   printf("\n\n\n");
 
   test_convolution();
