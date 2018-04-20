@@ -1,5 +1,5 @@
-#ifndef TENSOR3_HPP
-#define TENSOR3_HPP
+#ifndef TILED_TENSOR3_HPP
+#define TILED_TENSOR3_HPP
 
 #include "HLS/hls.h"
 #include "common.hpp"
@@ -20,23 +20,49 @@
 
 using namespace ihc;
 
-typedef struct tensor3_ {
+typedef struct tiled_tensor3_ {
   Numeric *data;
   uint depth;
   uint rows;
   uint cols;
+
   uint vol;
 
-  Major maj;
-} tensor3;
+  uint tile_depth;
+  uint tile_rows;
+  uint tile_cols;
 
-int tensor3_init(tensor3 *tensor, uint rows, uint cols, uint depth, Major maj) {
+  uint depth_t;
+  uint rows_t;
+  uint cols_t;
+
+  uint tile_vol;
+
+  uint repl;
+
+  Major maj;
+  Major tile_maj;
+} tiled_tensor3;
+
+int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, uint tile_depth, uint tile_rows, uint tile_cols, Major maj, Major tile_maj) {
   tensor->vol = rows * cols * depth;
   tensor->rows = rows;
   tensor->cols = cols;
   tensor->depth = depth;
+
+  tensor->tile_rows = tile_rows;
+  tensor->tile_cols = tile_cols;
+  tensor->tile_depth = tile_depth;
+
+  tensor->rows_t = INT_DIV_CEIL(rows, tile_rows);
+  tensor->cols_t = INT_DIV_CEIL(cols, tile_cols);
+  tensor->depth_t = INT_DIV_CEIL(depth, tile_depth);
+  tensor->tile_vol = tensor->rows_t * tensor->cols_t * tensor->depth_t;
+
+
   tensor->maj = maj;
-  tensor->data = (float *)malloc(tensor->vol * sizeof(Numeric));
+  tensor->tile_maj = tile_maj;
+  tensor->data = (float *)malloc(tensor->tile_vol * sizeof(Numeric));
   if (tensor->data == NULL) {
     return 1;
   }
@@ -44,10 +70,19 @@ int tensor3_init(tensor3 *tensor, uint rows, uint cols, uint depth, Major maj) {
 }
 
 // Assumes input data is row major
-int tensor3_set_data(tensor3 *t, Numeric *data) {
+int tiled_tensor3_set_data(tiled_tensor3 *t, Numeric *data) {
   uint idx = 0;
   switch(t->maj) {
     case ROW_MAJ:
+      for (uint i = 0; i < t->depth_t; i++) {
+        for (uint j = 0; j < j->rows_t; j++) {
+          for (uint k = 0; k < j->cols_t; k++) {
+
+            
+            
+          }
+        }
+      }
       for (uint i = 0; i < t->vol; i++) {
         t->data[i] = data[i];
       }

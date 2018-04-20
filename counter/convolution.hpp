@@ -58,9 +58,6 @@ Numeric test_input[3][5][5] =
         {15., 16., 17., 18., 19.},
         {20., 21., 22., 23., 24.}}};
 
-
-#define INT_DIV_CEIL(a, b) ((a) / (b) + ((a) % (b) > 0))
-
 inline void convolution(tensor3 *input, tensor3 *output, tensor4 *kernel, vector *bias, uint strideX, uint strideY) {
   int rowsX = INT_DIV_CEIL(input->rows - kernel->rows + 1, strideX);
   int colsY = INT_DIV_CEIL(input->cols - kernel->cols + 1, strideY);

@@ -7,14 +7,19 @@
 
 #define SIZE 24
 
-int test_tensor3() {
-  Numeric data[SIZE];
-  for (int i = 0; i < SIZE; i++) {
-    data[i] = i;
-  }
+int test_tensor3(char *err_msg) {
+  const uint rows = 4;
+  const uint cols = 2;
+  const uint depth = 3;
+  const uint vol = row * cols * depth;
 
   int ret;
   tensor3 t_row, t_col, t_dep;
+  Numeric data[vol];
+  
+  for (int i = 0; i < vol; i++) {
+    data[i] = i;
+  }
 
   ret = tensor3_init(&t_row, 4, 2, 3, ROW_MAJ);
   tensor3_set_data(&t_row, data);
@@ -97,7 +102,7 @@ int test_tensor4() {
 
 int main() {
   // test_tensor4();
-  test_convolution();
+  test_tensor3();
   return 0;
 }
 

@@ -1,5 +1,5 @@
 SOURCE_MAIN   := counter.cpp
-TEST_MAIN     := test/main.cpp
+TEST_MAIN     := test_main.cpp
 SOURCE_FILES  := 
 
 HLS_CXX_FLAGS := 
