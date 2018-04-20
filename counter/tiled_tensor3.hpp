@@ -22,51 +22,58 @@ using namespace ihc;
 
 typedef struct tiled_tensor3_ {
   Numeric *data;
+
+  // Actual data dimensions
   uint depth;
   uint rows;
   uint cols;
-
   uint vol;
 
+  // inner tile dimensions
   uint tile_depth;
   uint tile_rows;
   uint tile_cols;
+  uint tile_vol;
+  Major tile_maj;
 
+  // outer tile dimensions
   uint depth_t;
   uint rows_t;
   uint cols_t;
-
-  uint tile_vol;
+  uint vol_t;
+  Major maj_t;
 
   uint repl;
-
-  Major maj;
-  Major tile_maj;
 } tiled_tensor3;
 
-int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, uint tile_depth, uint tile_rows, uint tile_cols, Major maj, Major tile_maj) {
-  tensor->vol = rows * cols * depth;
+int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, uint tile_depth, uint tile_rows, uint tile_cols, Major maj_t, Major tile_maj) {
   tensor->rows = rows;
   tensor->cols = cols;
   tensor->depth = depth;
+  tensor->vol = rows * cols * depth;
 
   tensor->tile_rows = tile_rows;
   tensor->tile_cols = tile_cols;
   tensor->tile_depth = tile_depth;
+  tensor->tile_vol = tile_rows * tile_cols * tile_depth;
+  tensor->tile_maj = tile_maj;
 
   tensor->rows_t = INT_DIV_CEIL(rows, tile_rows);
   tensor->cols_t = INT_DIV_CEIL(cols, tile_cols);
   tensor->depth_t = INT_DIV_CEIL(depth, tile_depth);
-  tensor->tile_vol = tensor->rows_t * tensor->cols_t * tensor->depth_t;
+  tensor->vol_t = tensor->rows_t * tensor->cols_t * tensor->depth_t;
+  tensor->maj_t = maj_t;
 
-
-  tensor->maj = maj;
-  tensor->tile_maj = tile_maj;
-  tensor->data = (float *)malloc(tensor->tile_vol * sizeof(Numeric));
+  tensor->data = (Numeric *)malloc(tensor->tile_vol * tensor->vol_t * sizeof(Numeric));
   if (tensor->data == NULL) {
     return 1;
   }
   return 0;
+}
+
+Numeric* tiled_tensor3_tile(tiled_tensor3 *t, uint row_t, uint col_t, uint dep_t) {
+  uint tile_idx = tensor3_idx_raw(t->tile_maj, t->rows_t, t->cols_t, t->depth_t, row_t, col_t, dep_t);
+  return &t->data[tile_idx * t->tile_vol];
 }
 
 // Assumes input data is row major
@@ -78,8 +85,15 @@ int tiled_tensor3_set_data(tiled_tensor3 *t, Numeric *data) {
         for (uint j = 0; j < j->rows_t; j++) {
           for (uint k = 0; k < j->cols_t; k++) {
 
-            
-            
+            Numeric *tile = tiled_tensor3_tile(t, j, k, i);
+            for (uint ix = 0; ix < t->tile_depth; ix++) {
+              for (uint jx = 0; jx < t->tile_rows; jx++) {
+                for (uint kx = 0; kx < t->tile_cols; kx++) {
+                  tile[]
+                }
+              }
+            }
+
           }
         }
       }

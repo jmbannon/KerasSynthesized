@@ -46,51 +46,45 @@ int tensor3_init(tensor3 *tensor, uint rows, uint cols, uint depth, Major maj) {
   return 0;
 }
 
-// Assumes input data is row major
-int tensor3_set_data(tensor3 *t, Numeric *data) {
-  uint idx = 0;
-  switch(t->maj) {
-    case ROW_MAJ:
-      for (uint i = 0; i < t->vol; i++) {
-        t->data[i] = data[i];
-      }
-      return 0;
-
-    case COL_MAJ:
-      for (uint i = 0; i < t->depth; i++) {
-        for (uint j = 0; j < t->cols; j++) {
-          for (uint k = 0; k < t->rows; k++) {
-            t->data[idx++] = data[ROW3_MAJ_IDX(t, k, j, i)];
-          }
-        }
-      }
-      return 0;
-
-    case DEP_MAJ:
-      for (uint i = 0; i < t->rows; i++) {
-        for (uint j = 0; j < t->cols; j++) {
-          for (uint k = 0; k < t->depth; k++) {
-            t->data[idx++] = data[ROW3_MAJ_IDX(t, i, j, k)];
-          }
-        }
-      }
-      return 0;
-    default:
-      return 1;
-  }
-}
-
-inline uint tensor3_idx(tensor3 *t, uint row, uint col, uint dep) {
-  switch(t->maj) {
-    case ROW_MAJ: return ROW3_MAJ_IDX(t, row, col, dep);
-    case COL_MAJ: return COL3_MAJ_IDX(t, row, col, dep);
-    case DEP_MAJ: return DEP3_MAJ_IDX(t, row, col, dep);
+inline uint tensor3_idx_raw(Major maj, uint rows, uint cols, uint depth, uint row, uint col, uint dep) {
+  switch(maj) {
+    case ROW_MAJ: return ROW3_MAJ_IDX_RAW(rows, cols, row, col, dep);
+    case COL_MAJ: return COL3_MAJ_IDX_RAW(rows, cols, row, col, dep);
+    case DEP_MAJ: return DEP3_MAJ_IDX_RAW(cols, depth, row, col, dep);
     default: printf("ERROR! GET LIBRARY\n"); return 0;
   }
 }
 
+inline uint tensor3_idx(tensor3 *t, uint row, uint col, uint dep) {
+  return tensor3_idx_raw(t->maj, t->rows, t->cols, t->depth, row, col, dep);
+}
+
+inline Numeric tensor3_val_raw(Numeric *t, Major maj, uint rows, uint cols, uint depth, uint row, uint col, uint dep) {
+  return t[tensor3_idx_raw(maj, rows, cols, depth, row, col, dep)];
+}
+
 inline Numeric tensor3_val(tensor3 *t, uint row, uint col, uint dep) {
-  return t->data[tensor3_idx(t, row, col, dep)];
+  return tensor3_val_raw(t->data, t->maj, t->rows, t->cols, t->depth, row, col, dep);
+}
+
+int tensor3_set_data_raw(Numeric *t, Numeric *data, Major maj, uint rows, uint cols, uint depth) {
+  uint idx = 0;
+  uint vol = rows * cols * depth;
+
+  for (uint i = 0; i < depth; i++) {
+    for (uint j = 0; j < rows; j++) {
+      for (uint k = 0; k < cols; k++) {
+        t[tensor3_idx_raw(maj, rows, cols, depth, j, k, i)] = data[idx++];
+      }
+    }
+  }
+
+  return 0;
+}
+
+// Assumes input data is row major
+int tensor3_set_data(tensor3 *t, Numeric *data) {
+  return tensor3_set_data_raw(t->data, data, t->maj, t->rows, t->cols, t->depth);
 }
 
 void tensor3_print(tensor3 *t) {
