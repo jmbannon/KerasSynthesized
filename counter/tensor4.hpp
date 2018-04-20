@@ -65,7 +65,7 @@ int tensor4_set_data(tensor4 *t, Numeric *data) {
           for (uint k = 0; k < t->chans; k++) {
           	for (uint l = 0; l < t->depth; l++) {
               t->data[idx++] = data[ROW4_MAJ_IDX(t, i, j, l, k)];
-        	}
+        	  }
           }
         }
       }
@@ -76,7 +76,7 @@ int tensor4_set_data(tensor4 *t, Numeric *data) {
           for (uint k = 0; k < t->depth; k++) {
           	for (uint l = 0; l < t->chans; l++) {
               t->data[idx++] = data[ROW4_MAJ_IDX(t, i, j, k, l)];
-        	}
+        	  }
           }
         }
       }

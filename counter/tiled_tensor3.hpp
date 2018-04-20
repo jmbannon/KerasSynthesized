@@ -6,18 +6,6 @@
 #include <stdio.h>
 #include <math.h>
 
-// ROW-COL-DEP
-#define ROW3_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((row) * (t)->cols) + (col))
-#define ROW3_MAJ_VAL(t, row, col, dep) ((t)->data[ROW3_MAJ_IDX((t), (row), (col), (dep))])
-
-// COL-ROW-DEP
-#define COL3_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((col) * (t)->rows) + (row))
-#define COL3_MAJ_VAL(t, row, col, dep) ((t)->data[COL3_MAJ_IDX((t), (row), (col), (dep))])
-
-// DEP-ROW-COL
-#define DEP3_MAJ_IDX(t, row, col, dep) (((row) * (t)->cols * (t)->depth) + ((col) * (t)->depth) + (dep))
-#define DEP3_MAJ_VAL(t, row, col, dep) ((t)->data[DEP3_MAJ_IDX((t), (row), (col), (dep))])
-
 using namespace ihc;
 
 typedef struct tiled_tensor3_ {
@@ -43,6 +31,7 @@ typedef struct tiled_tensor3_ {
   uint vol_t;
   Major maj_t;
 
+  uint size;
   uint repl;
 } tiled_tensor3;
 
@@ -64,7 +53,8 @@ int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, 
   tensor->vol_t = tensor->rows_t * tensor->cols_t * tensor->depth_t;
   tensor->maj_t = maj_t;
 
-  tensor->data = (Numeric *)malloc(tensor->tile_vol * tensor->vol_t * sizeof(Numeric));
+  tensor->size = tensor->tile_vol * tensor->vol_t;
+  tensor->data = (Numeric *)malloc(tensor->size * sizeof(Numeric));
   if (tensor->data == NULL) {
     return 1;
   }
@@ -72,78 +62,62 @@ int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, 
 }
 
 Numeric* tiled_tensor3_tile(tiled_tensor3 *t, uint row_t, uint col_t, uint dep_t) {
-  uint tile_idx = tensor3_idx_raw(t->tile_maj, t->rows_t, t->cols_t, t->depth_t, row_t, col_t, dep_t);
-  return &t->data[tile_idx * t->tile_vol];
+  uint idx_t = tensor3_idx_raw(t->tile_maj, t->rows_t, t->cols_t, t->depth_t, row_t, col_t, dep_t);
+  return &t->data[idx_t * t->tile_vol];
 }
 
-// Assumes input data is row major
+inline uint tiled_tensor3_idx_raw(Major maj_t, uint rows_t, uint cols_t, uint dep_t, 
+                                  Major tile_maj, uint tile_rows, uint tile_cols, uint tile_depth, 
+                                  uint row, uint col, uint dep) {
+
+  uint tile_vol = tile_rows * tile_cols * tile_depth;
+  uint row_t_idx = INT_DIV_CEIL(row, tile_rows);
+  uint col_t_idx = INT_DIV_CEIL(col, tile_cols);
+  uint dep_t_idx = INT_DIV_CEIL(dep, tile_depth);
+
+  uint idx_t = tensor3_idx_raw(maj_t, rows_t, cols_t, dep_t, row_t_idx, col_t_idx, dep_t_idx);
+  uint tile_idx = tensor3_idx_raw(tile_maj, tile_rows, tile_cols, tile_depth, row % tile_rows, col % tile_cols, dep % tile_depth);
+  return (idx_t * tile_vol) + tile_idx;
+}
+
+inline uint tiled_tensor3_idx(tiled_tensor3 *t, uint row, uint col, uint dep) {
+  return tiled_tensor3_idx_raw(t->maj_t, t->rows_t, t->cols_t, t->depth_t, t->tile_maj, t->tile_rows, t->tile_cols, t->tile_depth, row, col, dep);
+}
+
+inline Numeric tiled_tensor3_val(tiled_tensor3 *t, uint row, uint col, uint dep) {
+  return t->data[tiled_tensor3_idx(t, row, col, dep)];
+}
+
 int tiled_tensor3_set_data(tiled_tensor3 *t, Numeric *data) {
   uint idx = 0;
-  switch(t->maj) {
-    case ROW_MAJ:
-      for (uint i = 0; i < t->depth_t; i++) {
-        for (uint j = 0; j < j->rows_t; j++) {
-          for (uint k = 0; k < j->cols_t; k++) {
 
-            Numeric *tile = tiled_tensor3_tile(t, j, k, i);
-            for (uint ix = 0; ix < t->tile_depth; ix++) {
-              for (uint jx = 0; jx < t->tile_rows; jx++) {
-                for (uint kx = 0; kx < t->tile_cols; kx++) {
-                  tile[]
-                }
-              }
-            }
-
-          }
-        }
-      }
-      for (uint i = 0; i < t->vol; i++) {
-        t->data[i] = data[i];
-      }
-      return 0;
-
-    case COL_MAJ:
-      for (uint i = 0; i < t->depth; i++) {
-        for (uint j = 0; j < t->cols; j++) {
-          for (uint k = 0; k < t->rows; k++) {
-            t->data[idx++] = data[ROW3_MAJ_IDX(t, k, j, i)];
-          }
-        }
-      }
-      return 0;
-
-    case DEP_MAJ:
-      for (uint i = 0; i < t->rows; i++) {
-        for (uint j = 0; j < t->cols; j++) {
-          for (uint k = 0; k < t->depth; k++) {
-            t->data[idx++] = data[ROW3_MAJ_IDX(t, i, j, k)];
-          }
-        }
-      }
-      return 0;
-    default:
-      return 1;
-  }
-}
-
-inline uint tensor3_idx(tensor3 *t, uint row, uint col, uint dep) {
-  switch(t->maj) {
-    case ROW_MAJ: return ROW3_MAJ_IDX(t, row, col, dep);
-    case COL_MAJ: return COL3_MAJ_IDX(t, row, col, dep);
-    case DEP_MAJ: return DEP3_MAJ_IDX(t, row, col, dep);
-    default: printf("ERROR! GET LIBRARY\n"); return 0;
-  }
-}
-
-inline Numeric tensor3_val(tensor3 *t, uint row, uint col, uint dep) {
-  return t->data[tensor3_idx(t, row, col, dep)];
-}
-
-void tensor3_print(tensor3 *t) {
   for (uint i = 0; i < t->depth; i++) {
     for (uint j = 0; j < t->rows; j++) {
       for (uint k = 0; k < t->cols; k++) {
-        printf("%f, ", tensor3_val(t, j, k, i));
+        t->data[tiled_tensor3_idx(t, j, k, i)] = data[idx++];
+      }
+    }
+  }
+
+  return 0;
+}
+
+void tiled_tensor3_print(tiled_tensor3 *t) {
+  for (uint i = 0; i < t->depth; i++) {
+    for (uint j = 0; j < t->rows; j++) {
+
+      if (j > 0 && j % t->tile_rows == 0) {
+        for (uint k = 0; k < t->cols; k++) {
+          printf(" - ");
+        }
+        printf("\n");
+      }
+
+      for (uint k = 0; k < t->cols; k++) {
+        if (k > 0 && k % t->tile_cols == 0) {
+          printf(" | ");
+        }
+        printf("%f, ", tiled_tensor3_val(t, j, k, i));
       }
       printf("\n");
     }
