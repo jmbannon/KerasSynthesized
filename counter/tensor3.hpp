@@ -7,15 +7,18 @@
 #include <math.h>
 
 // ROW-COL-DEP
-#define ROW3_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((row) * (t)->cols) + (col))
+#define ROW3_MAJ_IDX_RAW(rows, cols, row, col, dep) (((dep) * (rows) * (cols)) + ((row) * (cols)) + (col))
+#define ROW3_MAJ_IDX(t, row, col, dep) (ROW3_MAJ_IDX_RAW((t)->rows, (t)->cols, (row), (col), (dep)))
 #define ROW3_MAJ_VAL(t, row, col, dep) ((t)->data[ROW3_MAJ_IDX((t), (row), (col), (dep))])
 
 // COL-ROW-DEP
-#define COL3_MAJ_IDX(t, row, col, dep) (((dep) * (t)->rows * (t)->cols) + ((col) * (t)->rows) + (row))
+#define COL3_MAJ_IDX_RAW(rows, cols, row, col, dep) (((dep) * (rows) * (cols)) + ((col) * (rows)) + (row))
+#define COL3_MAJ_IDX(t, row, col, dep) (COL3_MAJ_IDX_RAW((t)->rows, (t)->cols, (row), (col), (dep)))
 #define COL3_MAJ_VAL(t, row, col, dep) ((t)->data[COL3_MAJ_IDX((t), (row), (col), (dep))])
 
 // DEP-ROW-COL
-#define DEP3_MAJ_IDX(t, row, col, dep) (((row) * (t)->cols * (t)->depth) + ((col) * (t)->depth) + (dep))
+#define DEP3_MAJ_IDX_RAW(cols, depth, row, col, dep) (((row) * (cols) * (depth)) + ((col) * (depth)) + (dep))
+#define DEP3_MAJ_IDX(t, row, col, dep) (DEP3_MAJ_IDX_RAW((t)->cols, (t)->depth, (row), (col), (dep)))
 #define DEP3_MAJ_VAL(t, row, col, dep) ((t)->data[DEP3_MAJ_IDX((t), (row), (col), (dep))])
 
 using namespace ihc;
