@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include "test_tensor3.hpp"
+#include "test_tensor4.hpp"
 
 using namespace std;
 
@@ -26,6 +27,10 @@ void unittest_add_all() {
 	unittest_add("test_tensor3_row", test_tensor3_row);
 	unittest_add("test_tensor3_col", test_tensor3_col);
 	unittest_add("test_tensor3_dep", test_tensor3_dep);
+
+	unittest_add("test_tensor4_row", test_tensor3_row);
+	unittest_add("test_tensor4_dep", test_tensor3_col);
+	unittest_add("test_tensor4_chn", test_tensor3_dep);
 }
 
 int main() {
