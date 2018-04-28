@@ -58,6 +58,10 @@ Numeric test_input[3][5][5] =
         {15., 16., 17., 18., 19.},
         {20., 21., 22., 23., 24.}}};
 
+// inline void convolution_raw(Numeric *input, Numeric *output, Numeric *kernel, Numeric *bias, uint strideX, uint strideY) {
+  
+// }
+
 inline void convolution(tensor3 *input, tensor3 *output, tensor4 *kernel, vector *bias, uint strideX, uint strideY) {
   int rowsX = INT_DIV_CEIL(input->rows - kernel->rows + 1, strideX);
   int colsY = INT_DIV_CEIL(input->cols - kernel->cols + 1, strideY);
@@ -65,22 +69,20 @@ inline void convolution(tensor3 *input, tensor3 *output, tensor4 *kernel, vector
   for (int c = 0; c < kernel->chans; c++) {
 	  for (int i = 0; i < input->depth; i++) {
 	  	for (int j = 0; j < rowsX; j++) {
-		  for (int k = 0; k < colsY; k++) {
+  		  for (int k = 0; k < colsY; k++) {
 
-		  	if (i == 0) {
-		  		ROW3_MAJ_VAL(output, j, k, c) = V_VAL(bias, c);
-		  	}
-		  	// Kernel multiplication
-		  	for (int dx = 0; dx < kernel->rows; dx++) {
-		  		for (int dy = 0; dy < kernel->cols; dy++) {
-		  			// printf("%d %d | %d %d\n", j, k, j * strideX, j * strideY);
-		  			ROW3_MAJ_VAL(output, j, k, c) += ROW4_MAJ_VAL(kernel, dx, dy, i, c) * ROW3_MAJ_VAL(input, (j * strideX) + dx, (k * strideY) + dy, i);
-		  		}
-		  	}
-
-
-	  	  }
-	  	}
+  		  	if (i == 0) {
+  		  		ROW3_MAJ_VAL(output, j, k, c) = V_VAL(bias, c);
+  		  	}
+  		  	// Kernel multiplication
+  		  	for (int dx = 0; dx < kernel->rows; dx++) {
+  		  		for (int dy = 0; dy < kernel->cols; dy++) {
+  		  			// printf("%d %d | %d %d\n", j, k, j * strideX, j * strideY);
+  		  			ROW3_MAJ_VAL(output, j, k, c) += ROW4_MAJ_VAL(kernel, dx, dy, i, c) * ROW3_MAJ_VAL(input, (j * strideX) + dx, (k * strideY) + dy, i);
+  		  		}
+  		  	}
+  	  	}
+  	  }
 	  }
   }
 }
