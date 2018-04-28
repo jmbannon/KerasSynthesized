@@ -37,7 +37,7 @@ typedef struct tiled_tensor4_ {
   uint size;
 } tiled_tensor4;
 
-int tiled_tensor4_init(tiled_tensor4 *tensor, uint rows, uint cols, uint depth, uint chans, uint tile_depth, uint tile_rows, uint tile_cols, uint tile_chans, Major maj_t, Major tile_maj) {
+int tiled_tensor4_init(tiled_tensor4 *tensor, uint rows, uint cols, uint depth, uint chans, uint tile_rows, uint tile_cols, uint tile_depth, uint tile_chans, Major maj_t, Major tile_maj) {
   tensor->rows = rows;
   tensor->cols = cols;
   tensor->depth = depth;
@@ -101,6 +101,7 @@ int tiled_tensor4_set_data(tiled_tensor4 *t, Numeric *data) {
     for (uint i = 0; i < t->depth; i++) {
       for (uint j = 0; j < t->rows; j++) {
         for (uint k = 0; k < t->cols; k++) {
+          // printf("%d | %f\n", tiled_tensor4_idx(t, j, k, i, c), data[idx]);
           t->data[tiled_tensor4_idx(t, j, k, i, c)] = data[idx++];
         }
       }
