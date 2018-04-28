@@ -101,7 +101,6 @@ int tiled_tensor4_set_data(tiled_tensor4 *t, Numeric *data) {
     for (uint i = 0; i < t->depth; i++) {
       for (uint j = 0; j < t->rows; j++) {
         for (uint k = 0; k < t->cols; k++) {
-          // printf("%d | %f\n", tiled_tensor4_idx(t, j, k, i, c), data[idx]);
           t->data[tiled_tensor4_idx(t, j, k, i, c)] = data[idx++];
         }
       }
