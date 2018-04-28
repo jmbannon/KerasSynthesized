@@ -35,7 +35,6 @@ typedef struct tiled_tensor3_ {
   Major maj_t;
 
   uint size;
-  uint repl;
 } tiled_tensor4;
 
 int tiled_tensor4_init(tiled_tensor4 *tensor, uint rows, uint cols, uint depth, uint chans, uint tile_depth, uint tile_rows, uint tile_cols, uint tile_chans, Major maj_t, Major tile_maj) {
