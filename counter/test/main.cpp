@@ -24,26 +24,29 @@ void unittest_add(string name,
 	tests[test_count++] = test;
 }
 
+void unittest_break()
+{
+	unittest test = { .name = "__BREAK__", .test_function = NULL };
+	tests[test_count++] = test;
+}
+
 void unittest_add_all() {
-	// unittest_add("test_tensor3_row", test_tensor3_row);
-	// unittest_add("test_tensor3_col", test_tensor3_col);
-	// unittest_add("test_tensor3_dep", test_tensor3_dep);
-	// cout << endl;
-
-	// unittest_add("test_tensor4_row", test_tensor3_row);
-	// unittest_add("test_tensor4_dep", test_tensor3_col);
-	// unittest_add("test_tensor4_chn", test_tensor3_dep);
-	// cout << endl;
-
-	// unittest_add("test_tiled_tensor3_row_row", test_tiled_tensor3_row_row);
+	unittest_add("test_tensor3_row", test_tensor3_row);
+	unittest_add("test_tensor3_col", test_tensor3_col);
+	unittest_add("test_tensor3_dep", test_tensor3_dep);
+	unittest_break();
+	unittest_add("test_tensor4_row", test_tensor3_row);
+	unittest_add("test_tensor4_dep", test_tensor3_col);
+	unittest_add("test_tensor4_chn", test_tensor3_dep);
+	unittest_break();
+	unittest_add("test_tiled_tensor3_row_row", test_tiled_tensor3_row_row);
 	unittest_add("test_tiled_tensor3_col_col", test_tiled_tensor3_col_col);
-	// unittest_add("test_tiled_tensor3_dep_dep", test_tiled_tensor3_dep_dep);
-	// cout << endl;
-
+	unittest_add("test_tiled_tensor3_dep_dep", test_tiled_tensor3_dep_dep);
+	unittest_break();
 	// unittest_add("test_tiled_tensor4_row_row", test_tiled_tensor4_row_row);
 	// unittest_add("test_tiled_tensor4_col_col", test_tiled_tensor4_col_col);
 	// unittest_add("test_tiled_tensor4_dep_dep", test_tiled_tensor4_dep_dep);
-	// cout << endl;
+	// unittest_break();
 }
 
 int main() {
@@ -52,6 +55,11 @@ int main() {
 	int res = 0;
 	int failures = 0;
 	for (int i = 0; i < test_count; i++) {
+		if (tests[i].name == "__BREAK__") {
+			cout << endl;
+			continue;
+		}
+
 		res = (*tests[i].test_function) ();
 		if (res != 0) {
 			cout << "FAILURE  -  " << tests[i].name << endl;

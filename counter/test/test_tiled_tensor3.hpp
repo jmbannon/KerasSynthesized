@@ -16,13 +16,8 @@ int test_tiled_tensor3(tiled_tensor3 *t, Numeric *expected_linear) {
   }
 
   tiled_tensor3_set_data(t, data);
-  // for (uint i = 0; i < t->size; i++) {
-  //   printf("%d %f\n", i, t->data[i]);
-  // }
-  // tiled_tensor3_print(t);
 
   for (uint i = 0; i < t->vol; i++) {
-    // printf("%d | %f %f\n", i, t->data[i], expected_linear[i]);
     if (t->data[i] != expected_linear[i]) {
       return 1;
     }
@@ -59,10 +54,10 @@ int test_tiled_tensor3_col_col() {
 }
 
 int test_tiled_tensor3_dep_dep() {
-  Numeric expected_linear[24] = { 0., 8., 16., 1., 9., 17., 2., 10., 18., 3., 11., 19., 4., 12., 20., 5., 13., 21., 6., 14., 22., 7., 15., 23. };
+  Numeric expected_linear[96] = { 0., 24., 1., 25., 4., 28., 5., 29., 8., 32., 9., 33., 48., 72., 49., 73., 52., 76., 53., 77., 56., 80., 57., 81., 2., 26., 3., 27., 6., 30., 7., 31., 10., 34., 11., 35., 50., 74., 51., 75., 54., 78., 55., 79., 58., 82., 59., 83., 12., 36., 13., 37., 16., 40., 17., 41., 20., 44., 21., 45., 60., 84., 61., 85., 64., 88., 65., 89., 68., 92., 69., 93., 14., 38., 15., 39., 18., 42., 19., 43., 22., 46., 23., 47., 62., 86., 63., 87., 66., 90., 67., 91., 70., 94., 71., 95. };
   tiled_tensor3 t;
 
-  tiled_tensor3_init(&t, 8, 4, 4, 4, 4, 2, DEP_MAJ, DEP_MAJ);
+  tiled_tensor3_init(&t, 6, 4, 4, 3, 2, 2, DEP_MAJ, DEP_MAJ);
   return test_tiled_tensor3(&t, expected_linear);
 }
 

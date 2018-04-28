@@ -71,22 +71,13 @@ inline uint tiled_tensor3_idx_raw(Major maj_t, uint rows_t, uint cols_t, uint de
                                   uint row, uint col, uint dep) {
 
   uint tile_vol = tile_rows * tile_cols * tile_depth;
+
   uint row_t = row / tile_rows;
   uint col_t = col / tile_cols;
   uint dep_t = dep / tile_depth;
-
   uint idx_t = tensor3_idx_raw(maj_t, rows_t, cols_t, depth_t, row_t, col_t, dep_t);
 
-  // printf("POSITION (%d, %d, %d)\n", row, col, dep);
-  // printf("OUTER TILE:\n");
-  // printf("%d %d %d | %d %d %d | %d\n", row_t, col_t, dep_t, tile_rows, tile_cols, tile_depth, idx_t);
-
-
   uint tile_idx = tensor3_idx_raw(tile_maj, tile_rows, tile_cols, tile_depth, row % tile_rows, col % tile_cols, dep % tile_depth);
-  // printf("INTER TILE:\n");
-  // printf("%d, %d, %d | %d\n", row % tile_rows, col % tile_cols, dep % tile_depth, tile_idx);
-  // printf("INDEX:\n");
-  // printf("%d\n\n", (idx_t * tile_vol) + tile_idx);
   return (idx_t * tile_vol) + tile_idx;
 }
 
@@ -104,7 +95,6 @@ int tiled_tensor3_set_data(tiled_tensor3 *t, Numeric *data) {
   for (uint i = 0; i < t->depth; i++) {
     for (uint j = 0; j < t->rows; j++) {
       for (uint k = 0; k < t->cols; k++) {
-        printf("%d %f\n", tiled_tensor3_idx(t, j, k, i), data[idx]);
         t->data[tiled_tensor3_idx(t, j, k, i)] = data[idx++];
       }
     }
