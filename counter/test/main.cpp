@@ -3,6 +3,7 @@
 #include "test_tensor3.hpp"
 #include "test_tensor4.hpp"
 #include "test_tiled_tensor3.hpp"
+#include "test_tiled_tensor4.hpp"
 
 using namespace std;
 
@@ -43,10 +44,10 @@ void unittest_add_all() {
 	unittest_add("test_tiled_tensor3_col_col", test_tiled_tensor3_col_col);
 	unittest_add("test_tiled_tensor3_dep_dep", test_tiled_tensor3_dep_dep);
 	unittest_break();
-	// unittest_add("test_tiled_tensor4_row_row", test_tiled_tensor4_row_row);
-	// unittest_add("test_tiled_tensor4_col_col", test_tiled_tensor4_col_col);
-	// unittest_add("test_tiled_tensor4_dep_dep", test_tiled_tensor4_dep_dep);
-	// unittest_break();
+	unittest_add("test_tiled_tensor4_row_row", test_tiled_tensor4_row_row);
+	unittest_add("test_tiled_tensor4_dep_dep", test_tiled_tensor4_dep_dep);
+	unittest_add("test_tiled_tensor4_chn_chn", test_tiled_tensor4_chn_chn);
+	unittest_break();
 }
 
 int main() {

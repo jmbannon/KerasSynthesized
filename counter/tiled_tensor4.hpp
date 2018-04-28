@@ -8,7 +8,7 @@
 
 using namespace ihc;
 
-typedef struct tiled_tensor3_ {
+typedef struct tiled_tensor4_ {
   Numeric *data;
 
   // Actual data dimensions
@@ -76,10 +76,10 @@ inline uint tiled_tensor4_idx_raw(Major maj_t, uint rows_t, uint cols_t, uint de
                                   uint row, uint col, uint dep, uint ch) {
 
   uint tile_vol = tile_rows * tile_cols * tile_depth * tile_chans;
-  uint row_t = INT_DIV_CEIL(row, tile_rows);
-  uint col_t = INT_DIV_CEIL(col, tile_cols);
-  uint dep_t = INT_DIV_CEIL(dep, tile_depth);
-  uint ch_t = INT_DIV_CEIL(ch, tile_chans);
+  uint row_t = row / tile_rows;
+  uint col_t = col / tile_cols;
+  uint dep_t = dep / tile_depth;
+  uint ch_t = ch / tile_chans;
 
   uint idx_t = tensor4_idx_raw(maj_t, rows_t, cols_t, depth_t, chans_t, row_t, col_t, dep_t, ch_t);
   uint tile_idx = tensor4_idx_raw(tile_maj, tile_rows, tile_cols, tile_depth, tile_chans, row % tile_rows, col % tile_cols, dep % tile_depth, ch % tile_chans);
@@ -126,7 +126,7 @@ void tiled_tensor4_print(tiled_tensor4 *t) {
           if (k > 0 && k % t->tile_cols == 0) {
             printf(" | ");
           }
-          printf("%f, ", tiled_tensor3_val(t, j, k, i));
+          printf("%f, ", tiled_tensor4_val(t, j, k, i, c));
         }
         printf("\n");
       }
