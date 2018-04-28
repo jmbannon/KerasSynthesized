@@ -42,14 +42,20 @@ int main() {
 	unittest_add_all();
 
 	int res = 0;
+	int failures = 0;
 	for (int i = 0; i < test_count; i++) {
 		res = (*tests[i].test_function) ();
 		if (res != 0) {
 			cout << "FAILURE  -  " << tests[i].name << endl;
+			++failures;
 		} else {
 			cout << "SUCCESS  -  " << tests[i].name << endl;
 		}
 	}
-	cout << endl;
+	if (failures > 0) {
+		cout << "Number of test failures: " << failures << endl;
+	} else {
+		cout << "All tests passed!" << endl;
+	}
 	return 0;
 }

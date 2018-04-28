@@ -2,22 +2,25 @@
 #define KERNEL_HPP
 
 #include "HLS/hls.h"
-#include "tensor3.hpp"
+#include "tensor4.hpp"
 #include "common.hpp"
 #include <stdio.h>
 #include <math.h>
 
 
 // ROW-COL-DEP-CHAN
-#define ROW4_MAJ_IDX(t, row, col, dep, ch) (((ch) * (t)->depth * (t)->rows * (t)->cols) + ((dep) * (t)->rows * (t)->cols) + ((row) * (t)->cols) + (col))
+#define ROW4_MAJ_IDX_RAW(rows, cols, depth, row, col, dep, ch) (((ch) * (depth) * (rows) * (cols)) + ((dep) * (rows) * (cols)) + ((row) * (cols)) + (col))
+#define ROW4_MAJ_IDX(t, row, col, dep, ch) ROW4_MAJ_IDX_RAW((t)->rows, (t)->cols, (t)->depth, row, col, dep, ch)
 #define ROW4_MAJ_VAL(t, row, col, dep, ch) ((t)->data[ROW4_MAJ_IDX((t), (row), (col), (dep), (ch))])
 
 // DEP-CHAN-ROW-COL
-#define DEP4_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((ch) * (t)->depth) + (dep))
+#define DEP4_MAJ_IDX_RAW(cols, depth, chans, row, col, dep, ch) (((row) * (cols) * (chans) * (depth)) + ((col) * (chans) * (depth)) + ((ch) * (depth)) + (dep))
+#define DEP4_MAJ_IDX(t, row, col, dep, ch) DEP4_MAJ_IDX_RAW((t)->cols, (t)->depth, (t)->chans, row, col, dep, ch)
 #define DEP4_MAJ_VAL(t, row, col, dep, ch) ((t)->data[DEP4_MAJ_IDX((t), (row), (col), (dep))])
 
 // CHAN-DEP-ROW-COL
-#define CHN4_MAJ_IDX(t, row, col, dep, ch) (((row) * (t)->cols * (t)->chans * (t)->depth) + ((col) * (t)->chans * (t)->depth) + ((dep) * (t)->chans) + (ch))
+#define CHN4_MAJ_IDX_RAW(cols, depth, chans, row, col, dep, ch) (((row) * (cols) * (chans) * (depth)) + ((col) * (chans) * (depth)) + ((dep) * (chans)) + (ch))
+#define CHN4_MAJ_IDX(t, row, col, dep, ch) CHN4_MAJ_IDX_RAW((t)->cols, (t)->depth, (t)->chans, row, col, dep, ch)
 #define CHN4_MAJ_VAL(t, row, col, dep, ch) ((t)->data[DEP4_MAJ_IDX((t), (row), (col), (dep))])
 
 typedef struct tensor4_ {
@@ -50,50 +53,42 @@ int tensor4_init(tensor4 *tensor, uint rows, uint cols, uint depth, uint chans, 
   return 0;
 }
 
-// Assumes input data is row major
-int tensor4_set_data(tensor4 *t, Numeric *data) {
-  uint idx = 0;
-  switch(t->maj) {
-    case ROW_MAJ:
-      for (uint i = 0; i < t->size; i++) {
-        t->data[i] = data[i];
-      }
-      return 0;
-	case DEP_MAJ:
-      for (uint i = 0; i < t->rows; i++) {
-        for (uint j = 0; j < t->cols; j++) {
-          for (uint k = 0; k < t->chans; k++) {
-          	for (uint l = 0; l < t->depth; l++) {
-              t->data[idx++] = data[ROW4_MAJ_IDX(t, i, j, l, k)];
-        	  }
-          }
-        }
-      }
-      return 0;
-    case CHN_MAJ:
-      for (uint i = 0; i < t->rows; i++) {
-        for (uint j = 0; j < t->cols; j++) {
-          for (uint k = 0; k < t->depth; k++) {
-          	for (uint l = 0; l < t->chans; l++) {
-              t->data[idx++] = data[ROW4_MAJ_IDX(t, i, j, k, l)];
-        	  }
-          }
-        }
-      }
-      return 0;
-    default:
-      return 1;
+inline uint tensor4_idx_raw(Major maj, uint rows, uint cols, uint depth, uint chans, uint row, uint col, uint dep, uint ch) {
+  switch(maj) {
+    case ROW_MAJ: return ROW4_MAJ_IDX_RAW(rows, cols, depth, row, col, dep, ch);
+    case DEP_MAJ: return DEP4_MAJ_IDX_RAW(cols, depth, chans, row, col, dep, ch);
+    case CHN_MAJ: return CHN4_MAJ_IDX_RAW(cols, depth, chans, row, col, dep, ch);
+    default: printf("ERROR! GET LIBRARY\n"); return 0;
   }
 }
 
 inline uint tensor4_idx(tensor4 *t, uint row, uint col, uint dep, uint ch) {
-  switch(t->maj) {
-    case ROW_MAJ: return ROW4_MAJ_IDX(t, row, col, dep, ch);
-    case DEP_MAJ: return DEP4_MAJ_IDX(t, row, col, dep, ch);
-    case CHN_MAJ: return CHN4_MAJ_IDX(t, row, col, dep, ch);
-    default: printf("ERROR! GET LIBRARY\n"); return 0;
-  }
+  return tensor4_idx_raw(t->maj, t->rows, t->cols, t->depth, t->chans, row, col, dep, ch);
 }
+
+
+int tensor4_set_data_raw(Numeric *t, Numeric *data, Major maj, uint rows, uint cols, uint depth, uint chans) {
+  uint idx = 0;
+  uint vol = rows * cols * depth * chans;
+
+  for (uint c = 0; c < chans; c++) {
+    for (uint i = 0; i < depth; i++) {
+      for (uint j = 0; j < rows; j++) {
+        for (uint k = 0; k < cols; k++) {
+          t[tensor4_idx_raw(maj, rows, cols, depth, chans, j, k, i, c)] = data[idx++];
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
+// Assumes input data is row major
+int tensor4_set_data(tensor4 *t, Numeric *data) {
+  return tensor4_set_data_raw(t->data, data, t->maj, t->rows, t->cols, t->depth, t->chans);
+}
+
 
 inline Numeric tensor4_val(tensor4 *t, uint row, uint col, uint dep, uint ch) {
   return t->data[tensor4_idx(t, row, col, dep, ch)];

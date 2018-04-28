@@ -17,14 +17,6 @@ int test_tiled_tensor3(tiled_tensor3 *t, Numeric *expected_linear) {
 
   tiled_tensor3_set_data(t, data);
 
-  // for (uint i = 0; i < t->vol; i++) {
-  //   if (t->data[i] != expected_linear[i]) {
-  //     return 1;
-  //   }
-  // }
-
-  tiled_tensor3_print(t);
-
   int idx = 0;
   for (uint i = 0; i < t->depth; i++) {
     for (uint j = 0; j < t->rows; j++) {
