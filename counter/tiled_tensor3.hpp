@@ -61,21 +61,21 @@ int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, 
   return 0;
 }
 
-Numeric* tiled_tensor3_tile(tiled_tensor3 *t, uint row_t, uint col_t, uint dep_t) {
-  uint idx_t = tensor3_idx_raw(t->tile_maj, t->rows_t, t->cols_t, t->depth_t, row_t, col_t, dep_t);
+Numeric* tiled_tensor3_tile(tiled_tensor3 *t, uint row_t, uint col_t, uint depth_t) {
+  uint idx_t = tensor3_idx_raw(t->tile_maj, t->rows_t, t->cols_t, t->depth_t, row_t, col_t, depth_t);
   return &t->data[idx_t * t->tile_vol];
 }
 
-inline uint tiled_tensor3_idx_raw(Major maj_t, uint rows_t, uint cols_t, uint dep_t, 
+inline uint tiled_tensor3_idx_raw(Major maj_t, uint rows_t, uint cols_t, uint depth_t, 
                                   Major tile_maj, uint tile_rows, uint tile_cols, uint tile_depth, 
                                   uint row, uint col, uint dep) {
 
   uint tile_vol = tile_rows * tile_cols * tile_depth;
   uint row_t_idx = INT_DIV_CEIL(row, tile_rows);
   uint col_t_idx = INT_DIV_CEIL(col, tile_cols);
-  uint dep_t_idx = INT_DIV_CEIL(dep, tile_depth);
+  uint depth_t_idx = INT_DIV_CEIL(dep, tile_depth);
 
-  uint idx_t = tensor3_idx_raw(maj_t, rows_t, cols_t, dep_t, row_t_idx, col_t_idx, dep_t_idx);
+  uint idx_t = tensor3_idx_raw(maj_t, rows_t, cols_t, depth_t, row_t_idx, col_t_idx, depth_t_idx);
   uint tile_idx = tensor3_idx_raw(tile_maj, tile_rows, tile_cols, tile_depth, row % tile_rows, col % tile_cols, dep % tile_depth);
   return (idx_t * tile_vol) + tile_idx;
 }
