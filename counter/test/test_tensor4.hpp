@@ -26,13 +26,13 @@ int test_tensor4(tensor4 *t, Numeric *expected_linear) {
 
   int idx = 0;
   for (uint c = 0; c < t->chans; c++) {
-	for (uint i = 0; i < t->depth; i++) {
-	  for (uint j = 0; j < t->rows; j++) {
-	    for (uint k = 0; k < t->cols; k++) {
-	      if (tensor4_val(t, j, k, i, c) != idx++) {
-	        return 1;
-	      }
-	    }
+  	for (uint i = 0; i < t->depth; i++) {
+  	  for (uint j = 0; j < t->rows; j++) {
+  	    for (uint k = 0; k < t->cols; k++) {
+  	      if (tensor4_val(t, j, k, i, c) != idx++) {
+  	        return 1;
+  	      }
+  	    }
       }
     }
   }

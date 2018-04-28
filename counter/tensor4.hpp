@@ -32,21 +32,19 @@ typedef struct tensor4_ {
   uint cols;
 
   uint vol;
-  uint size;
 
   Major maj;
 } tensor4;
 
 int tensor4_init(tensor4 *tensor, uint rows, uint cols, uint depth, uint chans, Major maj) {
-  tensor->vol = rows * cols * depth;
-  tensor->size = tensor->vol * chans;
+  tensor->vol = rows * cols * depth * chans;
 
   tensor->rows = rows;
   tensor->cols = cols;
   tensor->depth = depth;
   tensor->chans = chans;
   tensor->maj = maj;
-  tensor->data = (float *)malloc(tensor->size * sizeof(Numeric));
+  tensor->data = (float *)malloc(tensor->vol * sizeof(Numeric));
   if (tensor->data == NULL) {
     return 1;
   }
@@ -69,7 +67,6 @@ inline uint tensor4_idx(tensor4 *t, uint row, uint col, uint dep, uint ch) {
 
 int tensor4_set_data_raw(Numeric *t, Numeric *data, Major maj, uint rows, uint cols, uint depth, uint chans) {
   uint idx = 0;
-  uint vol = rows * cols * depth * chans;
 
   for (uint c = 0; c < chans; c++) {
     for (uint i = 0; i < depth; i++) {
