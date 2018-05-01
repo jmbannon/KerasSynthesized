@@ -46,6 +46,10 @@ int tensor3_init(tensor3 *tensor, uint rows, uint cols, uint depth, Major maj) {
   return 0;
 }
 
+int tensor3_init_padding(tensor3 *tensor, uint rows, uint cols, uint depth, Major maj, uint paddingY, uint paddingX) {
+  return tensor3_init(tensor, rows + (2 * paddingY), cols + (2 * paddingX), depth, maj);
+}
+
 inline uint tensor3_idx_raw(Major maj, uint rows, uint cols, uint depth, uint row, uint col, uint dep) {
   switch(maj) {
     case ROW_MAJ: return ROW3_MAJ_IDX_RAW(rows, cols, row, col, dep);
@@ -67,14 +71,36 @@ inline Numeric tensor3_val(tensor3 *t, uint row, uint col, uint dep) {
   return tensor3_val_raw(t->data, t->maj, t->rows, t->cols, t->depth, row, col, dep);
 }
 
-int tensor3_set_data_raw(Numeric *t, Numeric *data, Major maj, uint rows, uint cols, uint depth) {
+
+int tensor3_set_data_raw(Numeric *t, Numeric *data, Major maj, uint rows, uint cols, uint depth, uint paddingY, uint paddingX) {
   uint idx = 0;
   uint vol = rows * cols * depth;
 
   for (uint i = 0; i < depth; i++) {
-    for (uint j = 0; j < rows; j++) {
+    // Pads top rows
+    for (uint j = 0; j < paddingY; j++) {
       for (uint k = 0; k < cols; k++) {
+        t[tensor3_idx_raw(maj, rows, cols, depth, j, k, i)] = 0.;
+      }
+    }
+
+    // Pads columns and sets data
+    for (uint j = paddingY; j < (rows - paddingY); j++) {
+      for (uint k = 0; k < paddingX; k++) {
+        t[tensor3_idx_raw(maj, rows, cols, depth, j, k, i)] = 0.;
+      }
+      for (uint k = paddingX; k < (cols - paddingX); k++) {
         t[tensor3_idx_raw(maj, rows, cols, depth, j, k, i)] = data[idx++];
+      }
+      for (uint k = (cols - paddingX); k < cols; k++) {
+        t[tensor3_idx_raw(maj, rows, cols, depth, j, k, i)] = 0.;
+      }
+    }
+
+    // Pads bottom rows
+    for (uint j = (rows - paddingY); j < rows; j++) {
+      for (uint k = 0; k < cols; k++) {
+        t[tensor3_idx_raw(maj, rows, cols, depth, j, k, i)] = 0.;
       }
     }
   }
@@ -84,7 +110,11 @@ int tensor3_set_data_raw(Numeric *t, Numeric *data, Major maj, uint rows, uint c
 
 // Assumes input data is row major
 int tensor3_set_data(tensor3 *t, Numeric *data) {
-  return tensor3_set_data_raw(t->data, data, t->maj, t->rows, t->cols, t->depth);
+  return tensor3_set_data_raw(t->data, data, t->maj, t->rows, t->cols, t->depth, 0, 0);
+}
+
+int tensor3_set_data_padding(tensor3 *t, Numeric *data, uint paddingX, uint paddingY) {
+  return tensor3_set_data_raw(t->data, data, t->maj, t->rows, t->cols, t->depth, paddingX, paddingY);
 }
 
 void tensor3_print(tensor3 *t) {
