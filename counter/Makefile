@@ -51,8 +51,8 @@ ifeq ($(VERBOSE),1)
   test-fpga: CXXFLAGS := $(CXXFLAGS) -v
 endif
 test-fpga: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) -march="Cyclone V" -o test-fpga
-test-fpga: $(SOURCE_FILES)
-	$(CXX) $(SOURCE_FILES) $(CXXFLAGS)
+test-fpga: $(SOURCE_FILES) $(SOURCE_MAIN)
+	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(SOURCE_MAIN) $(CXXFLAGS)
 	@echo "+--------------------------------------+"
 	@echo "| Run ./test-fpga to execute the test. |"
 	@echo "+--------------------------------------+"

@@ -1,4 +1,7 @@
 #include "HLS/hls.h"
+#include "tensor3.hpp"
+#include "tensor4.hpp"
+#include "common.hpp"
 #include <stdio.h>
 #include <math.h>
 
@@ -14,62 +17,82 @@ bool fcompare(float a, float b) {
     return fabs(a - b) < 1e-6f;
 }
 
+hls_max_concurrency(6)
 component
-void convolution5(fstream_in &in0,
-                  fstream_in &in1,
-                  fstream_in &in2,
+void convolution6(fstream_in &row0,
+                  fstream_in &row1,
+                  fstream_in &row2,
                   fstream_out &out,
-                  hls_avalon_slave_memory_argument(9*sizeof(float)) float *weights,
+                  hls_avalon_slave_memory_argument(9*sizeof(float)) float *lweights,
                   hls_stable_argument int in_size) {
-  // Includes ends for pipelining even if output is wasted
-  // to avoid conditionals
-  float outputs[7];
-
-  // Sums of each col in convolver
-  float sum[3];
-
-  // Local weights loaded in registers
-  float lweights[9];
-
-  #pragma unroll
-  for (int i = 0; i < 9; i++) {
-    lweights[i] = weights[i];
-  }
-
   #pragma unroll 1
   for (int m = 0; m < 3; m++) {
+    // Local weights loaded in registers
+    float registers[9];
 
-    #pragma unroll
-    for (int i = 0; i < 7; i++) {
-      outputs[i] = 0;
-    }
+    registers[1] = row0.read();
+    registers[4] = row1.read();
+    registers[7] = row2.read();
 
-    #pragma unroll
-    for (int i = 0; i < in_size; i++) {
-      float input0 = in0.read();
-      float input1 = in1.read();
-      float input2 = in2.read();
+    registers[0] = row0.read();
+    registers[3] = row1.read();
+    registers[6] = row2.read();
 
-      sum[0]  = input0 * lweights[0];
-      sum[0] += input1 * lweights[1];
-      sum[0] += input2 * lweights[2];
-      outputs[2 + i] += sum[0];
+    for (int i = 2; i < in_size; i++) {
+      // Sums of each col in convolver
+      float sum[3];
 
-      sum[1]  = input0 * lweights[3];
-      sum[1] += input1 * lweights[4];
-      sum[1] += input2 * lweights[5];
-      outputs[2 + i - 1] += sum[1];
+      registers[2] = registers[1];
+      registers[5] = registers[4];
+      registers[8] = registers[7];
+      sum[2] = (registers[2] * lweights[2]) + (registers[5] * lweights[5]) + (registers[8] * lweights[8]);
 
-      sum[2]  = input0 * lweights[6];
-      sum[2] += input1 * lweights[7];
-      sum[2] += input2 * lweights[8];
-      outputs[2 + i - 2] += sum[2];
-    }
-    for (int i = 2; i < 5; i++) {
-      out.write(outputs[i]);
+      registers[1] = registers[0];
+      registers[4] = registers[3];
+      registers[7] = registers[6];
+      sum[1] = (registers[1] * lweights[1]) + (registers[4] * lweights[4]) + (registers[7] * lweights[7]);
+
+      registers[0] = row0.read();
+      registers[3] = row1.read();
+      registers[6] = row2.read();
+      sum[0] = (registers[0] * lweights[0]) + (registers[3] * lweights[3]) + (registers[6] * lweights[6]);
+      
+      out.write(sum[0] + sum[1] + sum[2]);
     }
   }
 }
+
+// int convolution_3_3(tensor3 *input, tensor3 *output, tensor4 *kernel) {
+//   fstream_in in1;
+//   fstream_in in2;
+//   fstream_in in3;
+//   fstream_out output_stream;
+
+  
+//   int convolver_parallelism = 6;
+
+//   for (int c = 0; c < kernel->chans; c++) {
+//     for (int i = 0; i < input->depth; i++) {
+//       for (int j = 0; j < input->rows; j++) {
+//         for (int k = 0; k < input->cols; k++) {
+
+
+//           if (i == 0) {
+//             ROW3_MAJ_VAL(output, j, k, c) = V_VAL(bias, c);
+//           }
+//           // Kernel multiplication
+//           for (int dx = 0; dx < kernel->rows; dx++) {
+//             for (int dy = 0; dy < kernel->cols; dy++) {
+//               // printf("%d %d | %d %d\n", j, k, j * strideX, j * strideY);
+//               ROW3_MAJ_VAL(output, j, k, c) += ROW4_MAJ_VAL(kernel, dx, dy, i, c) * ROW3_MAJ_VAL(input, (j * strideX) + dx, (k * strideY) + dy, i);
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+
+// }
 
 int main() {
   // (transposed for col-wise)
@@ -88,9 +111,9 @@ int main() {
   };
 
   float exp_output[3][3] = {
-    { 0.0f, 9.0f, 15.0f },
-    { 0.0f, 9.0f, 15.0f },
-    { 0.0f, 9.0f, 15.0f }
+    { 0.0f, 6.0f, 12.0f },
+    { 0.0f, 6.0f, 12.0f },
+    { 0.0f, 6.0f, 12.0f }
   };
 
   float arr_output[9];
@@ -110,12 +133,14 @@ int main() {
     }
   }
 
-  convolution5(in1, in2, in3, output_stream, (float *)arr_weights, 5);
+  convolution6(in1, in2, in3, output_stream, (float *)arr_weights, 5);
 
   bool pass = true;
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
-      if (!fcompare(exp_output[i][j], output_stream.read())) {
+      float output = output_stream.read();
+      printf("%f %f\n", exp_output[i][j], output);
+      if (!fcompare(exp_output[i][j], output)) {
         pass = false;
       }
       //printf("%f ", output_stream.read());
