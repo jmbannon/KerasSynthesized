@@ -87,7 +87,7 @@ inline void convolution(tensor3 *input, tensor3 *output, tensor4 *kernel, vector
   }
 }
 
-void test_convolution() {
+void test_convolution2() {
 	int res;
 	tensor3 input;
 	tensor4 weights;
