@@ -1,4 +1,5 @@
 #include "HLS/hls.h"
+#include "HLS/ac_int.h"
 #include "HLS/ac_fixed.h"
 #include "HLS/ac_fixed_math.h"
 
@@ -26,38 +27,38 @@ bool fcompare(float16 a, float16 b) {
 
 component
 void convolution6(mm_src &input,
-                  const uint input_offset,
+                  const uint16 input_offset,
                   mm_src &output,
-                  const uint output_offset,
+                  const uint16 output_offset,
                   mm_src &weights,
-                  const uint weight_offset,
-                  const uint rows,
-                  const uint cols) {
+                  const uint16 weight_offset,
+                  const uint16 rows,
+                  const uint16 cols) {
   #pragma ivdep
-  for (int m = 0; m < rows - 2; m++) {
+  for (uint16 m = 0; m < rows - 2; m++) {
 
     // Local input storage
     float16 bram_fifo_in[3][256];
     float16 bram_fifo_out0[256];
     
     #pragma unroll
-    for (int i = 0; i < 3; i++) {
-
+    for (uint2 i = 0; i < 3; ++i) {
+      uint32 offset = input_offset + (cols * (m + i));
       #pragma ivdep
-      for (int j = 0; j < cols; j++) {
-        bram_fifo_in[i][j] = input[input_offset + (cols * (m + i)) + j];
+      for (uint16 j = 0; j < cols; ++j) {
+        bram_fifo_in[i][j] = input[offset + j];
       }
     }
 
     #pragma ivdep
-    for (int n = 0; n < cols - 2; n++) {
+    for (uint16 n = 0; n < cols - 2; ++n) {
 
       float16 lweights[3][3];
 
       #pragma unroll
-      for (int i = 0; i < 3; i++) {
+      for (uint2 i = 0; i < 3; ++i) {
         #pragma unroll
-        for (int j = 0; j < 3; j++) {
+        for (uint2 j = 0; j < 3; j++) {
           lweights[i][j] = weights[weight_offset + (i * 3) + j];
         }
       }
@@ -65,9 +66,9 @@ void convolution6(mm_src &input,
       bram_fifo_out0[n] = 0;
 
       #pragma unroll
-      for (int i = 0; i < 3; i++) {
+      for (uint2 i = 0; i < 3; ++i) {
         #pragma unroll
-        for (int j = 0; j < 3; j++) {
+        for (uint2 j = 0; j < 3; ++j) {
           bram_fifo_out0[n] += bram_fifo_in[i][n + j] * lweights[i][j];
         }
       }
@@ -76,8 +77,99 @@ void convolution6(mm_src &input,
     }
 
     #pragma ivdep
-    for (int n = 0; n < cols - 2; n++) {
+    for (uint16 n = 0; n < cols - 2; ++n) {
       output[output_offset + (m * (cols - 2)) + n] += bram_fifo_out0[n];
+    }
+  }
+}
+
+#define BUFFER_SIZE 20
+#define BUFFER_LOAD_PIPELINE 1
+
+component
+void convolution7(mm_src &input,
+                  const uint16 input_offset,
+                  mm_src &output,
+                  const uint16 output_offset,
+                  mm_src &weights,
+                  const uint16 weight_offset,
+                  const uint16 rows,
+                  const uint16 cols) {
+  #pragma ivdep
+  #pragma loop_coalesce 2
+  #pragma max_concurrency 1
+  for (uint16 m = 0; m < rows - 2; ++m) {
+    #pragma ivdep
+    #pragma max_concurrency 1
+    for (uint16 batch_offset = 0; batch_offset < cols; batch_offset += BUFFER_SIZE) {
+
+      // convolver registers
+      register float16 shift_registers[3][3];
+
+      // Local input/output storage
+      hls_memory float16 bram_fifo_in[3][BUFFER_SIZE];
+      hls_memory float16 bram_fifo_out0[BUFFER_SIZE];
+
+      // Loads data into registers and local storage
+      #pragma unroll
+      for (uint2 i = 0; i < 3; ++i) {
+
+        #pragma unroll
+        for (uint2 j = 0; j < 3; ++j) {
+          shift_registers[i][j] = input[input_offset + (cols * (m + i)) + batch_offset + j];
+        }
+      }
+
+      #pragma unroll
+      for (uint2 i = 0; i < 3; ++i) {
+        #pragma ivdep
+        for (uint16 j = 0; j < BUFFER_SIZE; ++j) {
+          bram_fifo_in[i][j] = input[input_offset + (cols * (m + i)) + batch_offset + j + 3];
+        }
+      }
+
+      // Convolve on entire buffer
+      #pragma max_concurrency 1
+      for (uint16 n = 0; n < BUFFER_SIZE; ++n) {
+       // convolver weights
+       register float16 lweights[3][3];
+
+        // loads weights (test within function)
+        #pragma unroll
+        for (uint2 i = 0; i < 3; ++i) {
+          #pragma unroll
+          for (uint2 j = 0; j < 3; ++j) {
+            lweights[i][j] = weights[weight_offset + (i * 3) + j];
+          }
+        }
+
+        // Convolution
+        register float16 tmp_out = 0;
+        #pragma unroll
+        for (uint2 i = 0; i < 3; ++i) {
+          #pragma unroll
+          for (uint2 j = 0; j < 3; ++j) {
+            tmp_out += shift_registers[i][j] * lweights[i][j];
+          }
+        }
+        bram_fifo_out0[n] = tmp_out;
+
+        // Shift register values
+        #pragma unroll
+        for (uint2 i = 0; i < 3; ++i) {
+          #pragma unroll
+          for (uint2 j = 2; j > 0; --j) {
+            shift_registers[i][j] = shift_registers[i][j - 1];
+          }
+          shift_registers[i][0] = bram_fifo_in[i][n];
+        }
+      }
+
+      #pragma ivdep
+      #pragma max_concurrency 1
+      for (uint16 n = 0; n < BUFFER_SIZE; ++n) {
+        output[output_offset + (m * cols) + n] += bram_fifo_out0[n];
+      }
     }
   }
 }
@@ -223,7 +315,7 @@ int main() {
   mm_src mm_src_output(arr_output, 9 * 4);
 
 
-  convolution6(mm_src_input, 0, mm_src_output, 0, mm_src_weights, 0, 5, 5);
+  convolution7(mm_src_input, 0, mm_src_output, 0, mm_src_weights, 0, 5, 5);
 
   bool pass = true;
   for (int i = 0; i < 3; ++i) {
