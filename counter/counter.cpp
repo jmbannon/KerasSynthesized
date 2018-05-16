@@ -15,7 +15,7 @@ using namespace ihc;
 
 typedef ac_fixed<16, 8, true> float16;
 
-typedef mm_master<float16, dwidth<32>, awidth<10>, latency<100> > mm_src;
+typedef mm_master<float16, dwidth<16>, awidth<10>, latency<100> > mm_src;
 
 typedef stream_in<float, buffer<SIZE> > fstream_in;
 typedef stream_out<float> fstream_out;
@@ -95,6 +95,18 @@ void convolution7(mm_src &input,
                   const uint16 weight_offset,
                   const uint16 rows,
                   const uint16 cols) {
+  // convolver weights
+  register float16 lweights[3][3];
+
+  // loads weights (test within function)
+  #pragma unroll
+  for (uint2 i = 0; i < 3; ++i) {
+    #pragma unroll
+    for (uint2 j = 0; j < 3; ++j) {
+      lweights[i][j] = weights[weight_offset + (i * 3) + j];
+    }
+  }
+
   #pragma ivdep
   #pragma loop_coalesce 2
   #pragma max_concurrency 1
@@ -123,6 +135,7 @@ void convolution7(mm_src &input,
       #pragma unroll
       for (uint2 i = 0; i < 3; ++i) {
         #pragma ivdep
+        #pragma max_concurrency 1
         for (uint16 j = 0; j < BUFFER_SIZE; ++j) {
           bram_fifo_in[i][j] = input[input_offset + (cols * (m + i)) + batch_offset + j + 3];
         }
@@ -131,17 +144,6 @@ void convolution7(mm_src &input,
       // Convolve on entire buffer
       #pragma max_concurrency 1
       for (uint16 n = 0; n < BUFFER_SIZE; ++n) {
-       // convolver weights
-       register float16 lweights[3][3];
-
-        // loads weights (test within function)
-        #pragma unroll
-        for (uint2 i = 0; i < 3; ++i) {
-          #pragma unroll
-          for (uint2 j = 0; j < 3; ++j) {
-            lweights[i][j] = weights[weight_offset + (i * 3) + j];
-          }
-        }
 
         // Convolution
         register float16 tmp_out = 0;
