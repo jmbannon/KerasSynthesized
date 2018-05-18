@@ -109,6 +109,7 @@ void convolution7(mm_src & restrict input,
       register Numeric shift_registers2[3];
 
       // Loads data into registers and local storage
+      #pragma loop_coalesce 2
       #pragma ivdep safelen(1)
       #pragma unroll 1
       #pragma max_concurrency 1
