@@ -11,11 +11,11 @@ using namespace ihc;
 
 
 component
-void convolution6(mm_src &input,
+void convolution6(mm_master<Numeric, aspace<2>, align<16>, awidth<16>, latency<0>, maxburst<4>, dwidth<64>, waitrequest<true> > &input,
                   const uint16 input_offset,
-                  mm_src &output,
+                  mm_master<Numeric, aspace<3>, align<16>, awidth<16>, latency<0>, maxburst<4>, dwidth<64>, waitrequest<true> > &output,
                   const uint16 output_offset,
-                  mm_src &weights,
+                  mm_master<Numeric, aspace<4>, align<16>, awidth<16>, latency<0>, maxburst<4>, dwidth<64>, waitrequest<true> > &weights,
                   const uint16 weight_offset,
                   const uint16 rows,
                   const uint16 cols) {
@@ -82,9 +82,10 @@ void convolution7(mm_src &input,
   register Numeric lweights[3][3];
 
   // loads weights (test within function)
-  #pragma unroll
+  #pragma loop_coalesce 2
+  #pragma unroll 1
   for (uint2 i = 0; i < 3; ++i) {
-    #pragma unroll
+    #pragma unroll 1
     for (uint2 j = 0; j < 3; ++j) {
       lweights[i][j] = weights[weight_offset + (i * 3) + j];
     }
@@ -102,64 +103,59 @@ void convolution7(mm_src &input,
       register Numeric shift_registers[3][3];
 
       // Local input/output storage
-      hls_memory Numeric bram_fifo_in[3][BUFFER_SIZE] hls_bankbits(5, 6) hls_singlepump;
-      hls_memory Numeric bram_fifo_out0[BUFFER_SIZE] hls_singlepump;
+      hls_memory Numeric bram_fifo_in0[BUFFER_SIZE] hls_simple_dual_port_memory;
+      hls_memory Numeric bram_fifo_in1[BUFFER_SIZE] hls_simple_dual_port_memory;
+      hls_memory Numeric bram_fifo_in2[BUFFER_SIZE] hls_simple_dual_port_memory;
+
+      hls_memory Numeric bram_fifo_out0[BUFFER_SIZE] hls_simple_dual_port_memory;
 
       // Loads data into registers and local storage
-      #pragma unroll
-      for (uint2 i = 0; i < 3; ++i) {
-
-        #pragma unroll
-        for (uint2 i = 0; i < 3; ++i) {
-          #pragma ivdep
-          #pragma unroll 16
-          for (uint16 j = 0; j < BUFFER_SIZE && j < cols; ++j) {
-            bram_fifo_in[i][j] = input[(cols * (m + i)) + batch_offset + j];
-          }
-
-          #pragma unroll
-          for (uint2 j = 0; j < 3; ++j) {
-            shift_registers[i][j] = bram_fifo_in[i][j];
-          }
-        }
+      #pragma ivdep
+      #pragma unroll 1
+      for (uint16 j = 0; j < BUFFER_SIZE && j < cols; ++j) {
+        bram_fifo_in0[j] = input[(cols * (m + 0)) + batch_offset + j];
+        bram_fifo_in1[j] = input[(cols * (m + 1)) + batch_offset + j];
+        bram_fifo_in2[j] = input[(cols * (m + 2)) + batch_offset + j];
       }
-
-      
 
       // Convolve on entire buffer
       #pragma max_concurrency 1
-      for (uint16 n = 0; n < BUFFER_SIZE - 2 && n < cols - 2; ++n) {
-        printf("n = %ld\n", UINT_VAL(n));
+      for (uint16 n = 0; n < BUFFER_SIZE && n <= cols; ++n) {
+        // printf("n = %d\n", UINT_VAL(n));
         // Convolution
-        register Numeric tmp_out = 0;
-        #pragma unroll
-        for (uint2 i = 0; i < 3; ++i) {
+        if (n > 2) {
+          register Numeric tmp_out = 0;
           #pragma unroll
-          for (uint2 j = 0; j < 3; ++j) {
-            printf("%f ", NUMERIC_VAL(shift_registers[i][j]));
-            tmp_out += shift_registers[i][j] * lweights[i][j];
+          for (uint2 i = 0; i < 3; ++i) {
+            #pragma unroll
+            for (uint2 j = 0; j < 3; ++j) {
+              // printf("%f ", NUMERIC_VAL(shift_registers[i][j]));
+              tmp_out += shift_registers[i][j] * lweights[i][j];
+            }
+            // printf("\n", NUMERIC_VAL(tmp_out));
           }
-          printf("\n");
+          // printf("\nout = %f\n", NUMERIC_VAL(tmp_out));
+          bram_fifo_out0[n] = tmp_out;
         }
-        printf("\ntmp_out = %f\n", NUMERIC_VAL(tmp_out));
-        bram_fifo_out0[n] = tmp_out;
 
         // Shift register values
         #pragma unroll
-        for (uint2 i = 0; i < 3; ++i) {
-          #pragma unroll
-          for (uint2 j = 0; j < 2; ++j) {
-            shift_registers[i][j] = shift_registers[i][j + 1];
-          }
-          shift_registers[i][2] = bram_fifo_in[i][n + 3];
+        for (uint2 j = 0; j < 2; ++j) {
+          shift_registers[0][j] = shift_registers[0][j + 1];
+          shift_registers[1][j] = shift_registers[1][j + 1];
+          shift_registers[2][j] = shift_registers[2][j + 1];
         }
+
+        shift_registers[0][2] = bram_fifo_in0[n];
+        shift_registers[1][2] = bram_fifo_in1[n];
+        shift_registers[2][2] = bram_fifo_in2[n];
       }
 
       #pragma ivdep
-      #pragma max_concurrency 1
-      for (uint16 n = 0; n < BUFFER_SIZE && n < cols - 2; ++n) {
-        printf("%ld | cols = %ld | %ld %ld = %f\n", UINT_VAL((m * (cols - 2)) + n), UINT_VAL(cols), UINT_VAL(m), UINT_VAL(n), NUMERIC_VAL(bram_fifo_out0[n]));
-        output[(m * (cols - 2)) + n] += bram_fifo_out0[n];
+      #pragma unroll 4
+      for (uint16 n = 0; n < BUFFER_SIZE - 3 && n < cols - 2; ++n) {
+        // printf("n = %d\n", UINT_VAL(n));
+        output[(m * (cols - 2)) + n] += bram_fifo_out0[n + 3];
       }
     }
   }
