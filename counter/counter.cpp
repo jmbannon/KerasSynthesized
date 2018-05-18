@@ -72,13 +72,13 @@ void convolution6(mm_master<Numeric, aspace<2>, align<16>, awidth<16>, latency<0
 #define BUFFER_LOAD_PIPELINE 1
 
 component
-void convolution7(mm_src &input,
-                  mm_src &output,
-                  mm_src &weights,
-                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric *bram_fifo_in0,
-                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric *bram_fifo_in1,
-                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric *bram_fifo_in2,
-                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric *bram_fifo_out0,
+void convolution7(mm_src & restrict input,
+                  mm_src & restrict output,
+                  mm_src & restrict weights,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*3*sizeof(Numeric)) Numeric * restrict bram_fifo,
+                  // hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_in1,
+                  // hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_in2,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_out0,
                   const uint16 weight_offset,
                   const uint16 rows,
                   const uint16 cols) {
@@ -107,25 +107,24 @@ void convolution7(mm_src &input,
       register Numeric shift_registers[3][3];
 
       // Loads data into registers and local storage
-      #pragma ivdep
+      #pragma ivdep safelen(1)
       #pragma unroll 1
       #pragma max_concurrency 1
-      for (uint16 j = 0; j < BUFFER_SIZE && j < cols; j += 4) {
-
-        #pragma ivdep
+      for (uint3 ii = 0; ii < 3; ++ii) {
+        #pragma ivdep safelen(1)
         #pragma unroll 1
         #pragma max_concurrency 1
-        for (uint3 k = 0; k < 4 && j + k < cols; ++k) {
-          bram_fifo_in0[j + k] = input[(cols * (m + 0)) + batch_offset + j + k];
-          bram_fifo_in1[j + k] = input[(cols * (m + 1)) + batch_offset + j + k];
-          bram_fifo_in2[j + k] = input[(cols * (m + 2)) + batch_offset + j + k];
+        for (uint16 j = 0; j < BUFFER_SIZE && j < cols; j += 4) {
+          #pragma unroll
+          for (uint3 k = 0; k < 4; ++k) {
+            bram_fifo[(ii * 16) + j + k] = input[(cols * (m + ii)) + batch_offset + j + k];
+          }
         }
       }
 
       // Convolve on entire buffer
       #pragma max_concurrency 1
       for (uint16 n = 0; n < BUFFER_SIZE && n <= cols; ++n) {
-        // printf("n = %d\n", UINT_VAL(n));
         // Convolution
         if (n > 2) {
           register Numeric tmp_out = 0;
@@ -133,12 +132,9 @@ void convolution7(mm_src &input,
           for (uint2 i = 0; i < 3; ++i) {
             #pragma unroll
             for (uint2 j = 0; j < 3; ++j) {
-              // printf("%f ", NUMERIC_VAL(shift_registers[i][j]));
               tmp_out += shift_registers[i][j] * lweights[i][j];
             }
-            // printf("\n", NUMERIC_VAL(tmp_out));
           }
-          // printf("\nout = %f\n", NUMERIC_VAL(tmp_out));
           bram_fifo_out0[n] = tmp_out;
         }
 
@@ -150,16 +146,16 @@ void convolution7(mm_src &input,
           shift_registers[2][j] = shift_registers[2][j + 1];
         }
 
-        shift_registers[0][2] = bram_fifo_in0[n];
-        shift_registers[1][2] = bram_fifo_in1[n];
-        shift_registers[2][2] = bram_fifo_in2[n];
+        shift_registers[0][2] = bram_fifo[0 + n];
+        shift_registers[1][2] = bram_fifo[16 + n];
+        shift_registers[2][2] = bram_fifo[32 + n];
       }
 
       #pragma ivdep
       #pragma unroll 4
       for (uint16 n = 0; n < BUFFER_SIZE - 3 && n < cols - 2; ++n) {
         // printf("n = %d\n", UINT_VAL(n));
-        output[(m * (cols - 2)) + n] += bram_fifo_out0[n + 3];
+        output[(m * (cols - 2)) + n] += bram_fifo_out0[48 + n + 3];
       }
     }
   }
@@ -305,12 +301,12 @@ int main() {
   mm_src mm_src_input(arr_input, 25 * 4);
   mm_src mm_src_output(arr_output, 9 * 4);
 
-  Numeric bram_fifo_in0[BUFFER_SIZE];
-  Numeric bram_fifo_in1[BUFFER_SIZE];
-  Numeric bram_fifo_in2[BUFFER_SIZE];
+  Numeric bram_fifo_in0[BUFFER_SIZE * 3];
+  // Numeric bram_fifo_in1[BUFFER_SIZE];
+  // Numeric bram_fifo_in2[BUFFER_SIZE];
   Numeric bram_fifo_out0[BUFFER_SIZE];
 
-  convolution7(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_in1, bram_fifo_in2, bram_fifo_out0, 0, 5, 5);
+  convolution7(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_out0, 0, 5, 5);
 
   bool pass = true;
   for (int i = 0; i < 3; ++i) {
