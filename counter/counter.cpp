@@ -115,9 +115,9 @@ void convolution7(mm_src & restrict input,
         #pragma unroll 1
         #pragma max_concurrency 1
         for (uint16 j = 0; j < BUFFER_SIZE && j < cols; j += 4) {
-          #pragma unroll
-          for (uint3 k = 0; k < 4; ++k) {
-            bram_fifo[(ii * 16) + j + k] = input[(cols * (m + ii)) + batch_offset + j + k];
+          for (uint3 k = 0; k < 4 && j + k < cols; ++k) {
+            // printf("bram idx: %ld, ii = %ld, input idx = %ld\n", UINT_VAL((ii * BUFFER_SIZE) + j + k), UINT_VAL(ii), UINT_VAL((cols * (m + ii)) + batch_offset + j + k));
+            bram_fifo[(ii * BUFFER_SIZE) + j + k] = input[(cols * (m + ii)) + batch_offset + j + k];
           }
         }
       }
@@ -132,10 +132,13 @@ void convolution7(mm_src & restrict input,
           for (uint2 i = 0; i < 3; ++i) {
             #pragma unroll
             for (uint2 j = 0; j < 3; ++j) {
+              // printf("%f ", NUMERIC_VAL(shift_registers[i][j]));
               tmp_out += shift_registers[i][j] * lweights[i][j];
             }
+            // printf("\n");
           }
           bram_fifo_out0[n] = tmp_out;
+          // printf("\nout = %f\n", NUMERIC_VAL(tmp_out));
         }
 
         // Shift register values
@@ -146,16 +149,16 @@ void convolution7(mm_src & restrict input,
           shift_registers[2][j] = shift_registers[2][j + 1];
         }
 
-        shift_registers[0][2] = bram_fifo[0 + n];
-        shift_registers[1][2] = bram_fifo[16 + n];
-        shift_registers[2][2] = bram_fifo[32 + n];
+        shift_registers[0][2] = bram_fifo[(BUFFER_SIZE * 0) + n];
+        shift_registers[1][2] = bram_fifo[(BUFFER_SIZE * 1) + n];
+        shift_registers[2][2] = bram_fifo[(BUFFER_SIZE * 2) + n];
       }
 
       #pragma ivdep
       #pragma unroll 4
       for (uint16 n = 0; n < BUFFER_SIZE - 3 && n < cols - 2; ++n) {
         // printf("n = %d\n", UINT_VAL(n));
-        output[(m * (cols - 2)) + n] += bram_fifo_out0[48 + n + 3];
+        output[(m * (cols - 2)) + n] += bram_fifo_out0[n + 3];
       }
     }
   }
