@@ -110,11 +110,9 @@ void convolution7(mm_src & restrict input,
 
       // Loads data into registers and local storage
       #pragma loop_coalesce 2
-      #pragma ivdep safelen(1)
       #pragma unroll 1
       #pragma max_concurrency 1
       for (uint3 ii = 0; ii < 3; ++ii) {
-        #pragma ivdep safelen(1)
         #pragma unroll 1
         #pragma max_concurrency 1
         for (uint16 j = 0; j < BUFFER_SIZE && j < cols; j += 4) {
