@@ -75,6 +75,10 @@ component
 void convolution7(mm_src &input,
                   mm_src &output,
                   mm_src &weights,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric *bram_fifo_in0,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric *bram_fifo_in1,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric *bram_fifo_in2,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric *bram_fifo_out0,
                   const uint16 weight_offset,
                   const uint16 rows,
                   const uint16 cols) {
@@ -102,20 +106,20 @@ void convolution7(mm_src &input,
       // convolver registers
       register Numeric shift_registers[3][3];
 
-      // Local input/output storage
-      hls_memory Numeric bram_fifo_in0[BUFFER_SIZE] hls_simple_dual_port_memory;
-      hls_memory Numeric bram_fifo_in1[BUFFER_SIZE] hls_simple_dual_port_memory;
-      hls_memory Numeric bram_fifo_in2[BUFFER_SIZE] hls_simple_dual_port_memory;
-
-      hls_memory Numeric bram_fifo_out0[BUFFER_SIZE] hls_simple_dual_port_memory;
-
       // Loads data into registers and local storage
       #pragma ivdep
       #pragma unroll 1
-      for (uint16 j = 0; j < BUFFER_SIZE && j < cols; ++j) {
-        bram_fifo_in0[j] = input[(cols * (m + 0)) + batch_offset + j];
-        bram_fifo_in1[j] = input[(cols * (m + 1)) + batch_offset + j];
-        bram_fifo_in2[j] = input[(cols * (m + 2)) + batch_offset + j];
+      #pragma max_concurrency 1
+      for (uint16 j = 0; j < BUFFER_SIZE && j < cols; j += 4) {
+
+        #pragma ivdep
+        #pragma unroll 1
+        #pragma max_concurrency 1
+        for (uint3 k = 0; k < 4 && j + k < cols; ++k) {
+          bram_fifo_in0[j + k] = input[(cols * (m + 0)) + batch_offset + j + k];
+          bram_fifo_in1[j + k] = input[(cols * (m + 1)) + batch_offset + j + k];
+          bram_fifo_in2[j + k] = input[(cols * (m + 2)) + batch_offset + j + k];
+        }
       }
 
       // Convolve on entire buffer
@@ -301,8 +305,12 @@ int main() {
   mm_src mm_src_input(arr_input, 25 * 4);
   mm_src mm_src_output(arr_output, 9 * 4);
 
+  Numeric bram_fifo_in0[BUFFER_SIZE];
+  Numeric bram_fifo_in1[BUFFER_SIZE];
+  Numeric bram_fifo_in2[BUFFER_SIZE];
+  Numeric bram_fifo_out0[BUFFER_SIZE];
 
-  convolution7(mm_src_input, mm_src_output, mm_src_weights, 0, 5, 5);
+  convolution7(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_in1, bram_fifo_in2, bram_fifo_out0, 0, 5, 5);
 
   bool pass = true;
   for (int i = 0; i < 3; ++i) {
