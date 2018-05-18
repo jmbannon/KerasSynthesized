@@ -24,12 +24,12 @@ HLS_INSTALL_DIR := $(shell which i++ | sed 's|/bin/i++||g')
 
 # Run the i++ x86 test by default
 .PHONY: default
-default: test-x86-64
+default: test-x86
 
 # Compile the component and testbench using g++ and run them as a regular program
 .PHONY: test-gpp
 test-gpp: CXX := g++
-test-gpp: CXXFLAGS := $(CXXFLAGS) -I"$(HLS_INSTALL_DIR)/include" -L"$(HLS_INSTALL_DIR)/host/linux64/lib" -lhls_emul -o test-gpp
+test-gpp: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=0 -I"$(HLS_INSTALL_DIR)/include" -L"$(HLS_INSTALL_DIR)/host/linux64/lib" -lhls_emul -o test-gpp
 test-gpp: $(SOURCE_FILES)
 	$(CXX) $(SOURCE_FILES) $(CXXFLAGS)
 	@echo "+-------------------------------------+"
@@ -37,9 +37,9 @@ test-gpp: $(SOURCE_FILES)
 	@echo "+-------------------------------------+"
 
 # Run the testbench and the component as a regular program
-.PHONY: test-x86-64
-test-x86-64: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
-test-x86-64: $(SOURCE_FILES) $(TEST_MAIN)
+.PHONY: test-x86
+test-x86: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=0 $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
+test-x86: $(SOURCE_FILES) $(TEST_MAIN)
 	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(TEST_MAIN) $(CXXFLAGS)
 	@echo "+----------------------------------------+"
 	@echo "| Run ./test-x86-64 to execute the test. |"
@@ -50,12 +50,21 @@ test-x86-64: $(SOURCE_FILES) $(TEST_MAIN)
 ifeq ($(VERBOSE),1)
   test-fpga: CXXFLAGS := $(CXXFLAGS) -v
 endif
-test-fpga: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) -march="Cyclone V" -o test-fpga
+test-fpga: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=1 $(HLS_CXX_FLAGS) -march="Cyclone V" -o test-fpga
 test-fpga: $(SOURCE_FILES) $(SOURCE_MAIN)
 	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(SOURCE_MAIN) $(CXXFLAGS)
 	@echo "+--------------------------------------+"
 	@echo "| Run ./test-fpga to execute the test. |"
 	@echo "+--------------------------------------+"
+
+# Run the testbench and the component as a regular program
+.PHONY: test-fpga-x86
+test-fpga-x86: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=1 $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
+test-fpga-x86: $(SOURCE_FILES) $(SOURCE_MAIN)
+	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(SOURCE_MAIN) $(CXXFLAGS)
+	@echo "+----------------------------------------+"
+	@echo "| Run ./test-x86-64 to execute the test. |"
+	@echo "+----------------------------------------+"
 
 # Clean up temprary and delivered files
 CLEAN_FILES := test-gpp \

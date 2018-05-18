@@ -6,23 +6,8 @@
 #include "tensor3.hpp"
 #include "tensor4.hpp"
 #include "common.hpp"
-#include <stdio.h>
-// #include <math.h>
-
-#define SIZE 10
 
 using namespace ihc;
-
-typedef ac_fixed<16, 8, true> float16;
-
-typedef mm_master<float16, dwidth<16>, awidth<10>, latency<100> > mm_src;
-
-typedef stream_in<float, buffer<SIZE> > fstream_in;
-typedef stream_out<float> fstream_out;
-
-bool fcompare(float16 a, float16 b) {
-    return fabs(a.to_double() - b.to_double()) < 1e-6f;
-}
 
 
 component
@@ -38,8 +23,8 @@ void convolution6(mm_src &input,
   for (uint16 m = 0; m < rows - 2; m++) {
 
     // Local input storage
-    float16 bram_fifo_in[3][256];
-    float16 bram_fifo_out0[256];
+    Numeric bram_fifo_in[3][256];
+    Numeric bram_fifo_out0[256];
     
     #pragma unroll
     for (uint2 i = 0; i < 3; ++i) {
@@ -53,7 +38,7 @@ void convolution6(mm_src &input,
     #pragma ivdep
     for (uint16 n = 0; n < cols - 2; ++n) {
 
-      float16 lweights[3][3];
+      Numeric lweights[3][3];
 
       #pragma unroll
       for (uint2 i = 0; i < 3; ++i) {
@@ -96,7 +81,7 @@ void convolution7(mm_src &input,
                   const uint16 rows,
                   const uint16 cols) {
   // convolver weights
-  register float16 lweights[3][3];
+  register Numeric lweights[3][3];
 
   // loads weights (test within function)
   #pragma unroll
@@ -116,11 +101,11 @@ void convolution7(mm_src &input,
     for (uint16 batch_offset = 0; batch_offset < cols; batch_offset += BUFFER_SIZE) {
 
       // convolver registers
-      register float16 shift_registers[3][3];
+      register Numeric shift_registers[3][3];
 
       // Local input/output storage
-      hls_memory float16 bram_fifo_in[3][BUFFER_SIZE];
-      hls_memory float16 bram_fifo_out0[BUFFER_SIZE];
+      hls_memory Numeric bram_fifo_in[3][BUFFER_SIZE];
+      hls_memory Numeric bram_fifo_out0[BUFFER_SIZE];
 
       // Loads data into registers and local storage
       #pragma unroll
@@ -143,10 +128,10 @@ void convolution7(mm_src &input,
 
       // Convolve on entire buffer
       #pragma max_concurrency 1
-      for (uint16 n = 0; n < BUFFER_SIZE; ++n) {
+      for (uint16 n = 0; n < BUFFER_SIZE && n < cols - 2; ++n) {
 
         // Convolution
-        register float16 tmp_out = 0;
+        register Numeric tmp_out = 0;
         #pragma unroll
         for (uint2 i = 0; i < 3; ++i) {
           #pragma unroll
@@ -169,7 +154,7 @@ void convolution7(mm_src &input,
 
       #pragma ivdep
       #pragma max_concurrency 1
-      for (uint16 n = 0; n < BUFFER_SIZE; ++n) {
+      for (uint16 n = 0; n < BUFFER_SIZE && n < cols - 2; ++n) {
         output[output_offset + (m * cols) + n] += bram_fifo_out0[n];
       }
     }
@@ -286,13 +271,13 @@ void convolution7(mm_src &input,
 // }
 
 int main() {
-  float16 arr_weights[3][3] = {
+  Numeric arr_weights[3][3] = {
     { 1.0f, 1.0f, 1.0f },
     { 2.0f, 2.0f, 2.0f },
     { 3.0f, 3.0f, 3.0f }
   };
 
-  float16 arr_input[5][5] = {
+  Numeric arr_input[5][5] = {
     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
@@ -300,13 +285,13 @@ int main() {
     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }
   };
 
-  float16 arr_output[3][3] = {
+  Numeric arr_output[3][3] = {
     { 0.0f, 0.0f, 0.0f },
     { 0.0f, 0.0f, 0.0f },
     { 0.0f, 0.0f, 0.0f }
   };
 
-  float16 exp_output[3][3] = {
+  Numeric exp_output[3][3] = {
     { 0.0f, 6.0f, 12.0f },
     { 0.0f, 6.0f, 12.0f },
     { 0.0f, 6.0f, 12.0f }
@@ -322,7 +307,7 @@ int main() {
   bool pass = true;
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
-      printf("%lf %lf\n", exp_output[i][j].to_double(), arr_output[i][j].to_double());
+      printf("%f %f\n", NUMERIC_VAL(exp_output[i][j]), NUMERIC_VAL(arr_output[i][j]));
       if (!fcompare(exp_output[i][j], arr_output[i][j])) {
         pass = false;
       }

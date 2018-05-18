@@ -39,7 +39,7 @@ int tensor3_init(tensor3 *tensor, uint rows, uint cols, uint depth, Major maj) {
   tensor->cols = cols;
   tensor->depth = depth;
   tensor->maj = maj;
-  tensor->data = (float *)malloc(tensor->vol * sizeof(Numeric));
+  tensor->data = (Numeric *)malloc(tensor->vol * sizeof(Numeric));
   if (tensor->data == NULL) {
     return 1;
   }
@@ -121,7 +121,7 @@ void tensor3_print(tensor3 *t) {
   for (uint i = 0; i < t->depth; i++) {
     for (uint j = 0; j < t->rows; j++) {
       for (uint k = 0; k < t->cols; k++) {
-        printf("%f, ", tensor3_val(t, j, k, i));
+        printf("%f, ", NUMERIC_VAL(tensor3_val(t, j, k, i)));
       }
       printf("\n");
     }
