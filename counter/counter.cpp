@@ -104,7 +104,9 @@ void convolution7(mm_src & restrict input,
     for (uint16 batch_offset = 0; batch_offset < cols; batch_offset += (BUFFER_SIZE - 2)) {
 
       // convolver registers
-      register Numeric shift_registers[3][3];
+      register Numeric shift_registers0[3];
+      register Numeric shift_registers1[3];
+      register Numeric shift_registers2[3];
 
       // Loads data into registers and local storage
       #pragma ivdep safelen(1)
@@ -129,29 +131,35 @@ void convolution7(mm_src & restrict input,
         if (n > 2) {
           register Numeric tmp_out = 0;
           #pragma unroll
-          for (uint2 i = 0; i < 3; ++i) {
-            #pragma unroll
-            for (uint2 j = 0; j < 3; ++j) {
-              // printf("%f ", NUMERIC_VAL(shift_registers[i][j]));
-              tmp_out += shift_registers[i][j] * lweights[i][j];
-            }
-            // printf("\n");
+          for (uint2 j = 0; j < 3; ++j) {
+            // printf("%f ", NUMERIC_VAL(shift_registers[i][j]));
+            tmp_out += shift_registers0[2 - j] * lweights[0][j];
+            tmp_out += shift_registers1[2 - j] * lweights[1][j];
+            tmp_out += shift_registers2[2 - j] * lweights[2][j];
           }
+          // printf("\n");
           bram_fifo_out0[n] = tmp_out;
           // printf("\nout = %f\n", NUMERIC_VAL(tmp_out));
         }
 
         // Shift register values
         #pragma unroll
-        for (uint2 j = 0; j < 2; ++j) {
-          shift_registers[0][j] = shift_registers[0][j + 1];
-          shift_registers[1][j] = shift_registers[1][j + 1];
-          shift_registers[2][j] = shift_registers[2][j + 1];
+        for (uint2 j = 2; j > 0; --j) {
+          shift_registers0[j] = shift_registers0[j - 1];
         }
+        shift_registers0[0] = bram_fifo[(BUFFER_SIZE * 0) + n];
 
-        shift_registers[0][2] = bram_fifo[(BUFFER_SIZE * 0) + n];
-        shift_registers[1][2] = bram_fifo[(BUFFER_SIZE * 1) + n];
-        shift_registers[2][2] = bram_fifo[(BUFFER_SIZE * 2) + n];
+        #pragma unroll
+        for (uint2 j = 2; j > 0; --j) {
+          shift_registers1[j] = shift_registers1[j - 1];
+        }
+        shift_registers1[0] = bram_fifo[(BUFFER_SIZE * 1) + n];
+
+        #pragma unroll
+        for (uint2 j = 2; j > 0; --j) {
+          shift_registers2[j] = shift_registers2[j - 1];
+        }
+        shift_registers2[0] = bram_fifo[(BUFFER_SIZE * 2) + n];
       }
 
       #pragma ivdep
