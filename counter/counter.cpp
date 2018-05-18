@@ -115,8 +115,8 @@ void convolution7(mm_src & restrict input,
         #pragma unroll 1
         #pragma max_concurrency 1
         for (uint16 j = 0; j < BUFFER_SIZE && j < cols; j += 4) {
-          for (uint3 k = 0; k < 4 && j + k < cols; ++k) {
-            // printf("bram idx: %ld, ii = %ld, input idx = %ld\n", UINT_VAL((ii * BUFFER_SIZE) + j + k), UINT_VAL(ii), UINT_VAL((cols * (m + ii)) + batch_offset + j + k));
+          #pragma unroll
+          for (uint3 k = 0; k < 4; ++k) {
             bram_fifo[(ii * BUFFER_SIZE) + j + k] = input[(cols * (m + ii)) + batch_offset + j + k];
           }
         }
