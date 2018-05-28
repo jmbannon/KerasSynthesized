@@ -50,7 +50,8 @@ void unittest_add_all() {
 	unittest_add("test_tiled_tensor4_dep_dep", test_tiled_tensor4_dep_dep);
 	unittest_add("test_tiled_tensor4_chn_chn", test_tiled_tensor4_chn_chn);
 	unittest_break();
-	unittest_add("test_component_convolver", test_component_convolver);
+	unittest_add("test_component_convolver_5_5", test_component_convolver_5_5);
+	unittest_add("test_component_convolver_256_256", test_component_convolver_256_256);
 	unittest_break();
 }
 
