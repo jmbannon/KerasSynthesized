@@ -129,4 +129,24 @@ void tensor3_print(tensor3 *t) {
   }
 }
 
+int tensor3_set_data_sequential_raw(tensor3 *t, bool row) {
+  for (uint i = 0; i < t->depth; i++) {
+    for (uint j = 0; j < t->rows; j++) {
+      for (uint k = 0; k < t->cols; k++) {
+        Numeric val = row ? (Numeric)k : (Numeric)j;
+        t->data[tensor3_idx_raw(t->maj, t->rows, t->cols, t->depth, j, k, i)] = val;
+      }
+    }
+  }
+  return 0;
+}
+
+int tensor3_set_data_sequential_row(tensor3 *t) {
+  return tensor3_set_data_sequential_raw(t, true);
+}
+
+int tensor3_set_data_sequential_col(tensor3 *t) {
+  return tensor3_set_data_sequential_raw(t, false);
+}
+
 #endif

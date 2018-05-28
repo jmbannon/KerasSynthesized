@@ -8,6 +8,14 @@ import numpy as np
 from collections import Counter
 
 import types
+from PIL import Image
+
+def test_image():
+	size = (256,250)
+	color = (210,150,160)
+	img = Image.new("RGBA",size,color)
+	return np.asarray(img)[:, :, :3]
+
 
 def to_cpp_tensor(readable_tensor, is_bias=False, strip_channels=False):
 	tensor = readable_tensor
@@ -85,11 +93,17 @@ def to_keras_tensor(tensor):
 # (nr_inputs, rows, cols, depth)
 #   to
 # (nr_inputs, depth, rows, cols)
-def to_readable_tensor(tensor):
-	def to_readable_arr(arr):
-		arr = np.swapaxes(arr, 3, 1)
-		arr = np.swapaxes(arr, 2, 3)
-		return arr
+def to_readable_tensor(tensor, batch=True):
+	if batch:
+		def to_readable_arr(arr):
+			arr = np.swapaxes(arr, 3, 1)
+			arr = np.swapaxes(arr, 2, 3)
+			return arr
+	else:
+		# (rows, cols, depth) to (depth, rows, cols)
+		def to_readable_arr(arr):
+			arr = np.swapaxes(arr, 2, 0)
+			return arr
 	return list_lambda(to_readable_arr, tensor)
 
 readable_input = np.array(
@@ -212,6 +226,10 @@ out = model.predict(to_keras_tensor(readable_input))
 
 print(to_readable_tensor(out))
 
+np.set_printoptions(threshold=np.nan)
 
+print(to_readable_tensor(test_image(), False))
+print(test_image().shape)
+print(to_cpp_tensor(to_readable_tensor(test_image(), False)))
 
 
