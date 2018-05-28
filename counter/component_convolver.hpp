@@ -110,7 +110,7 @@ void convolution7(mm_src & restrict input,
       #pragma loop_coalesce 2
       #pragma unroll 1
       #pragma max_concurrency 1
-      for (uint2 ii = 0; ii < 3; ++ii) {
+      for (uint3 ii = 0; ii < 3; ++ii) {
         #pragma ivdep
         #pragma unroll 4
         for (uint6 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {

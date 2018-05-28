@@ -23,8 +23,11 @@ int test_component_convolver_5_5() {
     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }
   };
 
-  Numeric arr_output[3][3] = { 0.0f };
-
+  Numeric arr_output[3][3] = {
+    { 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f }
+  };
   Numeric exp_output[3][3] = {
     { 0.0f, 6.0f, 12.0f },
     { 0.0f, 6.0f, 12.0f },
@@ -46,9 +49,7 @@ int test_component_convolver_5_5() {
       if (!fcompare(exp_output[i][j], arr_output[i][j])) {
         return 1;
       }
-      //printf("%f ", output_stream.read());
     }
-    //printf("\n");
   }
   return 0;
 }
@@ -64,7 +65,12 @@ int test_component_convolver_256_256() {
   tensor3_init(&input, 64, 64, 3, ROW_MAJ);
   tensor3_set_data_sequential_row(&input);
 
-  Numeric output[62][62] = { 0. };
+  Numeric output[62][62];
+  for (uint i = 0; i < 62; ++i) {
+  	for (uint j = 0; j < 62; ++j) {
+  		output[i][j] = 0.0f;
+  	}
+  }
 
   mm_src mm_src_weights(arr_weights, 9 * sizeof(Numeric));
   mm_src mm_src_input(input.data, 64 * 64 * 3 * sizeof(Numeric));
