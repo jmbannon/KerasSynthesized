@@ -76,8 +76,6 @@ void convolution7(mm_src & restrict input,
                   mm_src & restrict output,
                   mm_src & restrict weights,
                   hls_avalon_slave_memory_argument(BUFFER_SIZE*3*sizeof(Numeric)) Numeric * restrict bram_fifo,
-                  // hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_in1,
-                  // hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_in2,
                   hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_out0,
                   const uint16 weight_offset,
                   const uint16 rows,
@@ -170,115 +168,6 @@ void convolution7(mm_src & restrict input,
     }
   }
 }
-
-// int convolution_3_3(tensor3 *input,
-//                     tensor3 *output,
-//                     tensor4 *kernel,
-//                     mm_src &input
-//                     mm_src &output) {
-
-//   int p_inter = 2;
-//   int p_intra = 2;
-
-
-
-//   for (int c = 0; c < INT_DIV_CEIL(kernel->chans, p_inter); c += p_inter) {
-
-//     for (int i = 0; i < INT_DIV_CEIL(input->depth, p_intra); i += p_intra) {
-
-//       for (int cii = 0; cii < p_inter; cii++) {
-
-
-//         for (int iii = 0; iii < p_intra; iii++) {
-
-//           // Load p_inter kernels with p_intra depths
-
-//           // Load p_intra input depths
-//           // i = 0
-//           // i = 1
-
-//           for (int j = 0; j < input->rows; j++) {
-//             for (int k = 0; k < input->cols; k++) {
-//               // write to 3 (kernel size) streams
-//               fstream_in_arr[iii].write( /* input[j][k][i + iii] */ );
-//             }
-//           }
-
-//           // enqueue, convolution6(row0, row1, row2, tmpOut, kernel[:][:][i + iii][c + cii], input->cols)
-//           // enqueue, output_to_input(tmpOut, tmpIn)
-//           // enqueue, store_to_output2(tmpIn, fstream_out_arr[iii])
-//         }
-//       }
-//       // executeAll
-//     }
-//   }
-//   return 0;
-// }
-
-// int main() {
-//   // (transposed for col-wise)
-//   float arr_weights[3][3] = {
-//     { 1.0f, 1.0f, 1.0f },
-//     { 2.0f, 2.0f, 2.0f },
-//     { 3.0f, 3.0f, 3.0f }
-//   };
-
-//   float arr_input[5][5] = {
-//     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
-//     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
-//     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
-//     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f },
-//     { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }
-//   };
-
-//   float exp_output[3][3] = {
-//     { 0.0f, 6.0f, 12.0f },
-//     { 0.0f, 6.0f, 12.0f },
-//     { 0.0f, 6.0f, 12.0f }
-//   };
-
-//   float arr_output[9];
-
-//   fstream_in in1;
-//   fstream_in in2;
-//   fstream_in in3;
-//   fstream_out output_stream;
-
-//   for (int m = 0; m < 3; m++) {
-//     for (int i = m; i < (m + 3) && i < 5; i++) {
-//       for (int j = 0; j < 5; ++j) {
-//         in1.write(arr_input[i + 0][j]);
-//         in2.write(arr_input[i + 1][j]);
-//         in3.write(arr_input[i + 2][j]);
-//       }
-//     }
-//   }
-
-//   // convolution6(in1, in2, in3, output_stream, (float *)arr_weights, 5);
-
-//   bool pass = true;
-//   for (int i = 0; i < 3; ++i) {
-//     for (int j = 0; j < 3; ++j) {
-//       float output = output_stream.read();
-//       printf("%f %f\n", exp_output[i][j], output);
-//       if (!fcompare(exp_output[i][j], output)) {
-//         pass = false;
-//       }
-//       //printf("%f ", output_stream.read());
-//     }
-//     //printf("\n");
-//   }
-
-//   if (pass) {
-//     printf("PASSED\n");
-//   }
-//   else {
-//     printf("FAILED\n");
-//   }
-
-//   return 0;
-
-// }
 
 int main() {
   Numeric arr_weights[3][3] = {
