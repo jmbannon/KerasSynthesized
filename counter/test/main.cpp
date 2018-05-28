@@ -4,7 +4,7 @@
 #include "test_tensor4.hpp"
 #include "test_tiled_tensor3.hpp"
 #include "test_tiled_tensor4.hpp"
-// #include "test_convolution.hpp"
+#include "test_convolution2.hpp"
 
 using namespace std;
 
@@ -50,7 +50,7 @@ void unittest_add_all() {
 	unittest_add("test_tiled_tensor4_dep_dep", test_tiled_tensor4_dep_dep);
 	unittest_add("test_tiled_tensor4_chn_chn", test_tiled_tensor4_chn_chn);
 	unittest_break();
-	// unittest_add("test_convolution", test_convolution);
+	unittest_add("test_convolution", test_convolution);
 	unittest_break();
 }
 

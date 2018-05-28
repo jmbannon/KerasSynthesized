@@ -29,7 +29,7 @@ bool fcompare(Numeric a, Numeric b) {
 #define UINT_VAL(val) (val)
 
 typedef float Numeric;
-typedef mm_master<float, dwidth<32>, awidth<10>, latency<1> > mm_src;
+typedef mm_master<Numeric, latency<0> > mm_src;
 
 bool fcompare(Numeric a, Numeric b) {
     return fabs(a - b) < 1e-6f;
@@ -37,6 +37,9 @@ bool fcompare(Numeric a, Numeric b) {
 
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////
+
+#define BUFFER_SIZE 32
+#define BUFFER_LOAD_PIPELINE 1
 
 enum Major { ROW_MAJ, COL_MAJ, DEP_MAJ, CHN_MAJ };
 
