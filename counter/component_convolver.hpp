@@ -94,7 +94,6 @@ void convolution7(mm_src & restrict input,
   }
 
   #pragma ivdep
-  #pragma loop_coalesce 2
   #pragma max_concurrency 1
   for (uint16 m = 0; m < rows - 2; ++m) {
     #pragma ivdep
@@ -107,23 +106,21 @@ void convolution7(mm_src & restrict input,
       register Numeric shift_registers2[3];
 
       // Loads data into registers and local storage
+      #pragma ivdep
       #pragma loop_coalesce 2
       #pragma unroll 1
       #pragma max_concurrency 1
-      for (uint3 ii = 0; ii < 3; ++ii) {
-        #pragma unroll 1
-        #pragma max_concurrency 1
-        for (uint16 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; j += 4) {
-          #pragma unroll
-          for (uint3 k = 0; k < 4; ++k) {
-            bram_fifo[(ii * BUFFER_SIZE) + j + k] = input[(cols * (m + ii)) + batch_offset + j + k];
-          }
+      for (uint2 ii = 0; ii < 3; ++ii) {
+        #pragma ivdep
+        #pragma unroll 4
+        for (uint6 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
+          bram_fifo[(ii * BUFFER_SIZE) + j] = input[(cols * (m + ii)) + batch_offset + j];
         }
       }
 
       // Convolve on entire buffer
       #pragma max_concurrency 1
-      for (uint16 n = 0; n < BUFFER_SIZE && n <= cols; ++n) {
+      for (uint6 n = 0; n < BUFFER_SIZE; ++n) {
         // Convolution
         if (n > 2) {
           register Numeric tmp_out = 0;
@@ -161,7 +158,7 @@ void convolution7(mm_src & restrict input,
 
       #pragma ivdep
       #pragma unroll 4
-      for (uint16 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
+      for (uint6 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
         // printf("n = %d\n", UINT_VAL(n));
         output[(m * (cols - 2)) + batch_offset + n] += bram_fifo_out0[n + 3];
         // printf("output[%d] = %f\n", ((m * (cols - 2)) + batch_offset + n).to_long(), output[(m * (cols - 2)) + batch_offset + n]);
