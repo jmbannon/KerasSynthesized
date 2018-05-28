@@ -99,7 +99,7 @@ void convolution7(mm_src & restrict input,
   for (uint16 m = 0; m < rows - 2; ++m) {
     #pragma ivdep
     #pragma max_concurrency 1
-    for (uint16 batch_offset = 0; batch_offset < cols; batch_offset += (BUFFER_SIZE - 2)) {
+    for (uint16 batch_offset = 0; batch_offset < cols; batch_offset += (BUFFER_SIZE - 3)) {
 
       // convolver registers
       register Numeric shift_registers0[3];
@@ -113,7 +113,7 @@ void convolution7(mm_src & restrict input,
       for (uint3 ii = 0; ii < 3; ++ii) {
         #pragma unroll 1
         #pragma max_concurrency 1
-        for (uint16 j = 0; j < BUFFER_SIZE && j < cols; j += 4) {
+        for (uint16 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; j += 4) {
           #pragma unroll
           for (uint3 k = 0; k < 4; ++k) {
             bram_fifo[(ii * BUFFER_SIZE) + j + k] = input[(cols * (m + ii)) + batch_offset + j + k];
@@ -161,12 +161,14 @@ void convolution7(mm_src & restrict input,
 
       #pragma ivdep
       #pragma unroll 4
-      for (uint16 n = 0; n < BUFFER_SIZE - 3 && n < cols - 2; ++n) {
+      for (uint16 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
         // printf("n = %d\n", UINT_VAL(n));
-        output[(m * (cols - 2)) + n] += bram_fifo_out0[n + 3];
+        output[(m * (cols - 2)) + batch_offset + n] += bram_fifo_out0[n + 3];
+        // printf("output[%d] = %f\n", ((m * (cols - 2)) + batch_offset + n).to_long(), output[(m * (cols - 2)) + batch_offset + n]);
       }
     }
   }
+  // printf("done!\n");
 }
 
 #endif
