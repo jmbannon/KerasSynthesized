@@ -7,6 +7,12 @@ CXX := i++
 override CXXFLAGS := $(CXXFLAGS) --fp-relaxed -I/usr/include/c++/4.4.7 -I/usr/include/c++/4.4.7/x86_64-linux-gnu -L/home/jb/intelFPGA_lite/17.1/hls/linux64/lib/dspba/linux64
 VERBOSE := 1
 
+CONVOLVER_INPUT_SIZE := 5
+
+TEST_FLAGS := -D CONVOLVER_TEST_INPUT_SIZE=$(CONVOLVER_INPUT_SIZE)
+TEST_X86_FLAGS := -D FPGA_COMPILE=0 $(TEST_FLAGS)
+TEST_FPGA_FLAGS := -D FPGA_COMPILE=0 $(TEST_FLAGS)
+
 # OS-dependant tools
 ifeq ($(OS),Windows_NT)
   RM  := rd /S /Q
@@ -26,19 +32,9 @@ HLS_INSTALL_DIR := $(shell which i++ | sed 's|/bin/i++||g')
 .PHONY: default
 default: test-x86
 
-# Compile the component and testbench using g++ and run them as a regular program
-.PHONY: test-gpp
-test-gpp: CXX := g++
-test-gpp: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=0 -I"$(HLS_INSTALL_DIR)/include" -L"$(HLS_INSTALL_DIR)/host/linux64/lib" -lhls_emul -o test-gpp
-test-gpp: $(SOURCE_FILES)
-	$(CXX) $(SOURCE_FILES) $(CXXFLAGS)
-	@echo "+-------------------------------------+"
-	@echo "| Run ./test-gpp to execute the test. |"
-	@echo "+-------------------------------------+"
-
 # Run the testbench and the component as a regular program
 .PHONY: test-x86
-test-x86: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=0 -D CONVOLVER_TEST_INPUT_SIZE=256 $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
+test-x86: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) $(TEST_X86_FLAGS) -march=x86-64 -o test-x86-64
 test-x86: $(SOURCE_FILES) $(TEST_MAIN)
 	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(TEST_MAIN) $(CXXFLAGS)
 	@echo "+----------------------------------------+"
@@ -50,7 +46,7 @@ test-x86: $(SOURCE_FILES) $(TEST_MAIN)
 ifeq ($(VERBOSE),1)
   test-fpga: CXXFLAGS := $(CXXFLAGS) -v
 endif
-test-fpga: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=1 $(HLS_CXX_FLAGS) -march="Cyclone V" -o test-fpga
+test-fpga: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) $(TEST_FPGA_FLAGS) -march="Cyclone V" -o test-fpga
 test-fpga: $(SOURCE_FILES) $(SOURCE_MAIN)
 	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(SOURCE_MAIN) $(CXXFLAGS)
 	@echo "+--------------------------------------+"
@@ -59,7 +55,7 @@ test-fpga: $(SOURCE_FILES) $(SOURCE_MAIN)
 
 # Run the testbench and the component as a regular program
 .PHONY: test-fpga-x86
-test-fpga-x86: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=1 $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
+test-fpga-x86: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) $(TEST_FPGA_FLAGS) -march=x86-64 -o test-x86-64
 test-fpga-x86: $(SOURCE_FILES) $(SOURCE_MAIN)
 	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(SOURCE_MAIN) $(CXXFLAGS)
 	@echo "+----------------------------------------+"
