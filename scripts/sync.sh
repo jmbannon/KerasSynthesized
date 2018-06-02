@@ -1,1 +1,1 @@
-rsync --exclude .DS* --exclude .git* --exclude *__pycache__* -vr -e ssh /Users/jbannon/workspace/KerasSynthesized home:/home/jb/workspace/
+rsync --exclude .DS* --exclude .git* --exclude *__pycache__* -vr -e ssh /Users/jbannon/workspace/KerasSynthesized local-home:/home/jb/workspace/
