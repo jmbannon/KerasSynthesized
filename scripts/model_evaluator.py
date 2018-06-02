@@ -111,6 +111,6 @@ def evaluate_model(model_name):
 	# keras.utils.plot_model(model, to_file='model.png', show_shapes=False, show_layer_names=True, rankdir='TB')
 
 # evaluate_model(keras_model('inception_v3'))
-evaluate_model('inception_resnet_v2')
+evaluate_model('vgg16')
 # evaluate_model('nasnet_mobile')
 
