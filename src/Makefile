@@ -38,7 +38,7 @@ test-gpp: $(SOURCE_FILES)
 
 # Run the testbench and the component as a regular program
 .PHONY: test-x86
-test-x86: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=0 $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
+test-x86: CXXFLAGS := $(CXXFLAGS) -D FPGA_COMPILE=0 -D CONVOLVER_TEST_INPUT_SIZE=256 $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
 test-x86: $(SOURCE_FILES) $(TEST_MAIN)
 	$(CXX) -v -g --debug-log $(SOURCE_FILES) $(TEST_MAIN) $(CXXFLAGS)
 	@echo "+----------------------------------------+"

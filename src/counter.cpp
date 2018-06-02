@@ -1,7 +1,7 @@
 #include "test/test_component_convolver.hpp"
 
 int main() {
-  int ret = test_component_convolver_5_5();
+  int ret = test_component_3_3_convolver_variable();
 
   if (ret == 0) {
     printf("PASSED\n");

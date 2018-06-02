@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <sstream>
+#include "../common.hpp"
 #include "test_tensor3.hpp"
 #include "test_tensor4.hpp"
 #include "test_tiled_tensor3.hpp"
@@ -33,6 +35,13 @@ void unittest_break()
 }
 
 void unittest_add_all() {
+
+	stringstream ss;
+	ss << CONVOLVER_TEST_INPUT_SIZE;
+	string conv_input_size = ss.str();
+
+	const string test_component_3_3_convolver_name = string("test_component_3_3_convolver_") + conv_input_size + string("_") + conv_input_size;
+
 	unittest_add("test_tensor3_row", test_tensor3_row);
 	unittest_add("test_tensor3_col", test_tensor3_col);
 	unittest_add("test_tensor3_dep", test_tensor3_dep);
@@ -51,7 +60,7 @@ void unittest_add_all() {
 	unittest_add("test_tiled_tensor4_chn_chn", test_tiled_tensor4_chn_chn);
 	unittest_break();
 	unittest_add("test_component_convolver_5_5", test_component_convolver_5_5);
-	unittest_add("test_component_convolver_256_256", test_component_convolver_256_256);
+	unittest_add(test_component_3_3_convolver_name, test_component_3_3_convolver_variable);
 	unittest_break();
 }
 

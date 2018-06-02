@@ -41,6 +41,10 @@ bool fcompare(Numeric a, Numeric b) {
 #define BUFFER_SIZE 32
 #define BUFFER_LOAD_PIPELINE 1
 
+#ifndef CONVOLVER_TEST_INPUT_SIZE
+#define CONVOLVER_TEST_INPUT_SIZE 5
+#endif
+
 enum Major { ROW_MAJ, COL_MAJ, DEP_MAJ, CHN_MAJ };
 
 #define INT_DIV_CEIL(a, b) ((a) / (b) + ((a) % (b) > 0))
