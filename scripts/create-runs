@@ -21,6 +21,6 @@ arrlength=${#arr[@]}
 # use for loop to read all values and indexes
 for (( i=0; i<${arrlength}; i+=2 ));
 do
-	echo "cp -R ../src ../${arr[$i]} && cd ../${arr[$i]} && screen -dmS ${arr[$i]} bash -c 'source ~/intelFPGA_lite/17.1/hls/init_hls.sh && pwd && make ${arr[$i+1]} test-fpga && ./test-fpga'"
+	cp -R ../src ../${arr[$i]} && cd ../${arr[$i]} && screen -dmS ${arr[$i]} bash -c 'source ~/intelFPGA_lite/17.1/hls/init_hls.sh && pwd && make ${arr[$i+1]} test-fpga && ./test-fpga > test-fpga-output.log'
 done
 

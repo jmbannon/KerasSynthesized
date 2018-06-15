@@ -1,5 +1,5 @@
 for x in `ls -l ../ | grep convolve | cut -d ' ' -f9`
 do
 	echo $x
-	rm -rfI ../$x
+	rm -rf ../$x
 done
