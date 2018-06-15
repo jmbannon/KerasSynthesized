@@ -1,0 +1,4 @@
+for x in `screen -ls | grep convolve | awk '{ print }'`
+do
+  screen -X -S $x quit
+done
