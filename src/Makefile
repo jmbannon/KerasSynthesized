@@ -7,7 +7,10 @@ CXX := i++
 override CXXFLAGS := $(CXXFLAGS) --fp-relaxed -I/usr/include/c++/4.4.7 -I/usr/include/c++/4.4.7/x86_64-linux-gnu -L/home/jb/intelFPGA_lite/17.1/hls/linux64/lib/dspba/linux64
 VERBOSE := 1
 
+ifndef CONVOLVER_INPUT_SIZE
 CONVOLVER_INPUT_SIZE := 5
+endif
+
 
 TEST_FLAGS := -D CONVOLVER_TEST_INPUT_SIZE=$(CONVOLVER_INPUT_SIZE)
 TEST_X86_FLAGS := -D FPGA_COMPILE=0 $(TEST_FLAGS)
