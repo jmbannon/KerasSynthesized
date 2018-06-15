@@ -1,0 +1,18 @@
+#!/bin/bash
+
+declare -a arr=(
+  "convolve_7" "CONVOLVER_INPUT_SIZE=5"
+  "convolve_14" "CONVOLVER_INPUT_SIZE=14"
+  "convolve_28" "CONVOLVER_INPUT_SIZE=28"
+  "convolve_56" "CONVOLVER_INPUT_SIZE=56"
+)
+
+# get length of an array
+arrlength=${#arr[@]}
+
+# use for loop to read all values and indexes
+for (( i=0; i<${arrlength}; i+=2 ));
+do
+	cp -R ../src ../${arr[$i]} && cd ../${arr[$i]} && screen -dmS ${arr[$i]} bash -c 'source ~/intelFPGA_lite/17.1/hls/init_hls.sh && pwd && make ${arr[$i+1]} test-fpga && ./test-fpga'
+done
+
