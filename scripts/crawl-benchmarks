@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo "" > ../benchmarks.csv
+
+# use for loop to read all values and indexes
+for x in `ls ../ | grep convolve`;
+do
+	grep -R -A 1 "\"data\"" ../$x/test-fpga.prj/reports/lib/verification_data.js | grep "'1'" | head -n 1 | awk '{ print $2 }' | cut -d ',' -f2 | awk -v name="$x" '{print name,$1}'
+done
+
