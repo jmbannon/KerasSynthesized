@@ -12,65 +12,6 @@
 
 using namespace ihc;
 
-
-component
-void convolution6(mm_master<Numeric, aspace<2>, align<16>, awidth<16>, latency<0>, maxburst<4>, dwidth<64>, waitrequest<true> > &input,
-                  const uint16 input_offset,
-                  mm_master<Numeric, aspace<3>, align<16>, awidth<16>, latency<0>, maxburst<4>, dwidth<64>, waitrequest<true> > &output,
-                  const uint16 output_offset,
-                  mm_master<Numeric, aspace<4>, align<16>, awidth<16>, latency<0>, maxburst<4>, dwidth<64>, waitrequest<true> > &weights,
-                  const uint16 weight_offset,
-                  const uint16 rows,
-                  const uint16 cols) {
-  #pragma ivdep
-  for (uint16 m = 0; m < rows - 2; m++) {
-
-    // Local input storage
-    Numeric bram_fifo_in[3][256];
-    Numeric bram_fifo_out0[256];
-    
-    #pragma unroll
-    for (uint2 i = 0; i < 3; ++i) {
-      uint32 offset = input_offset + (cols * (m + i));
-      #pragma ivdep
-      for (uint16 j = 0; j < cols; ++j) {
-        bram_fifo_in[i][j] = input[offset + j];
-      }
-    }
-
-    #pragma ivdep
-    for (uint16 n = 0; n < cols - 2; ++n) {
-
-      Numeric lweights[3][3];
-
-      #pragma unroll
-      for (uint2 i = 0; i < 3; ++i) {
-        #pragma unroll
-        for (uint2 j = 0; j < 3; j++) {
-          lweights[i][j] = weights[weight_offset + (i * 3) + j];
-        }
-      }
-
-      bram_fifo_out0[n] = 0;
-
-      #pragma unroll
-      for (uint2 i = 0; i < 3; ++i) {
-        #pragma unroll
-        for (uint2 j = 0; j < 3; ++j) {
-          bram_fifo_out0[n] += bram_fifo_in[i][n + j] * lweights[i][j];
-        }
-      }
-
-
-    }
-
-    #pragma ivdep
-    for (uint16 n = 0; n < cols - 2; ++n) {
-      output[output_offset + (m * (cols - 2)) + n] += bram_fifo_out0[n];
-    }
-  }
-}
-
 component
 void convolution7(mm_src & restrict input,
                   mm_src & restrict output,
@@ -168,6 +109,120 @@ void convolution7(mm_src & restrict input,
       for (uint6 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
         output[output_offset + n] = bram_fifo_out0[n + 3];
       }
+    }
+  }
+}
+
+component
+void activation7(hls_avalon_slave_memory_argument(224*sizeof(Numeric)) Numeric * restrict input,
+                mm_src & restrict output,
+                const uint16 rows,
+                const uint16 cols,
+                const bool write_to_output) {
+  for (uint6 i = 0; i < rows; ++i) {
+    for (uint6 j = 0; j < cols; ++j) {
+      input[(i * cols) + j] = MAX(input[(i * cols) + j], 0.0);
+    }
+  }
+
+  if (write_to_output) {
+    for (uint6 i = 0; i < rows; ++i) {
+      for (uint6 j = 0; j < cols; ++j) {
+        output[(i * cols) + j] = input[(i * cols) + j];
+      }
+    }
+  }
+}
+
+component
+void bn_activation7(hls_avalon_slave_memory_argument(224*sizeof(Numeric)) Numeric * restrict input,
+                    mm_src & restrict output,
+                    const uint16 rows,
+                    const uint16 cols,
+                    const Numeric beta,
+                    const Numeric gamma,
+                    const bool write_to_output) {
+  for (uint6 i = 0; i < rows; ++i) {
+    for (uint6 j = 0; j < cols; ++j) {
+      input[(i * cols) + j] = MAX((input[(i * cols) + j] * gamma) + beta, 0.0);
+    }
+  }
+
+  if (write_to_output) {
+    for (uint6 i = 0; i < rows; ++i) {
+      for (uint6 j = 0; j < cols; ++j) {
+        output[(i * cols) + j] = input[(i * cols) + j];
+      }
+    }
+  }
+}
+
+component 
+void pooling_max7(hls_avalon_slave_memory_argument(224*sizeof(Numeric)) Numeric * restrict input,
+                  mm_src & restrict output,
+                  const uint16 rows,
+                  const uint16 cols) {
+
+  const uint16 output_rows = rows / 2;
+  const uint16 output_cols = cols / 2;
+
+  // Pool columns together
+  for (uint6 i = 0; i < rows; ++i) {
+    for (uint6 j = 0; j < cols; j+=2) {
+      
+      hls_register const uint16 offset = (i * cols) + j;
+      input[offset] = MAX(input[offset], input[offset + 1]);
+    }
+  }
+
+  // Pool rows together
+  for (uint6 i = 0; i < rows; i+=2) {
+    for (uint6 j = 0; j < cols; j+=2) {
+      
+      hls_register const uint16 offset = (i * cols) + j;
+      hls_register const uint16 offset_next = ((i + 1) * cols) + j;
+      input[offset] = MAX(input[offset], input[offset_next]);
+    }
+  }
+
+  for (uint6 i = 0; i < output_rows; ++i) {
+    for (uint6 j = 0; j < output_cols; ++j) {
+      output[(i * output_cols) + j] = input[(i * cols * 2) + (j * 2)];
+    }
+  }
+}
+
+component 
+void pooling_avg7(hls_avalon_slave_memory_argument(224*sizeof(Numeric)) Numeric * restrict input,
+                  mm_src & restrict output,
+                  const uint16 rows,
+                  const uint16 cols) {
+
+  const uint16 output_rows = rows / 2;
+  const uint16 output_cols = cols / 2;
+
+  // Pool columns together, summing
+  for (uint6 i = 0; i < rows; ++i) {
+    for (uint6 j = 0; j < cols; j+=2) {
+      
+      hls_register const uint16 offset = (i * cols) + j;
+      input[offset] = input[offset] + input[offset + 1];
+    }
+  }
+
+  // Pool rows together, summing then averaging
+  for (uint6 i = 0; i < rows; i+=2) {
+    for (uint6 j = 0; j < cols; j+=2) {
+      
+      hls_register const uint16 offset = (i * cols) + j;
+      hls_register const uint16 offset_next = ((i + 1) * cols) + j;
+      input[offset] = (input[offset] + input[offset_next]) / 4;
+    }
+  }
+
+  for (uint6 i = 0; i < output_rows; ++i) {
+    for (uint6 j = 0; j < output_cols; ++j) {
+      output[(i * output_cols) + j] = input[(i * cols * 2) + (j * 2)];
     }
   }
 }

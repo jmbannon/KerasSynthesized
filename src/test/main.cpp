@@ -7,6 +7,7 @@
 #include "test_tiled_tensor3.hpp"
 #include "test_tiled_tensor4.hpp"
 #include "test_component_convolver.hpp"
+#include "test_component_pooling.hpp"
 
 using namespace std;
 
@@ -61,6 +62,9 @@ void unittest_add_all() {
 	unittest_break();
 	unittest_add("test_component_convolver_5_5", test_component_convolver_5_5);
 	unittest_add(test_component_3_3_convolver_name, test_component_3_3_convolver_variable);
+	unittest_break();
+	unittest_add("test_component_max_pooling_6_6", test_component_max_pooling_6_6);
+	unittest_add("test_component_avg_pooling_6_6", test_component_avg_pooling_6_6);
 	unittest_break();
 }
 
