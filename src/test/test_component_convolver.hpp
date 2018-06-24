@@ -41,7 +41,7 @@ int test_component_convolver_5_5() {
   Numeric bram_fifo_in0[BUFFER_SIZE * 3];
   Numeric bram_fifo_out0[BUFFER_SIZE];
 
-  convolution7(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_out0, 0, 5, 5);
+  convolution7(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_out0, 0, 5, 5, 0, 0);
 
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
@@ -79,7 +79,7 @@ int test_component_3_3_convolver_variable() {
   Numeric bram_fifo_in0[BUFFER_SIZE * 3];
   Numeric bram_fifo_out0[BUFFER_SIZE];
 
-  convolution7(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_out0, 0, CONVOLVER_TEST_INPUT_SIZE, CONVOLVER_TEST_INPUT_SIZE);
+  convolution7(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_out0, 0, CONVOLVER_TEST_INPUT_SIZE, CONVOLVER_TEST_INPUT_SIZE, 0, 0);
 
   for (uint i = 0; i < (CONVOLVER_TEST_INPUT_SIZE - 2); i++) {
   	for (uint j = 0; j < (CONVOLVER_TEST_INPUT_SIZE - 2); j++) {

@@ -20,7 +20,9 @@ void convolution7(mm_src & restrict input,
                   hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_out0,
                   const uint16 weight_offset,
                   const uint16 rows,
-                  const uint16 cols) {
+                  const uint16 cols,
+                  const uint3 paddingX,
+                  const uint3 paddingY) {
   // convolver weights
   hls_register Numeric lweights[3][3];
 
@@ -56,10 +58,15 @@ void convolution7(mm_src & restrict input,
         hls_register const uint16 input_offset = (cols * (m + ii)) + batch_offset;
         hls_register const uint16 fifo_offset = (ii * BUFFER_SIZE);
 
+        uint6 j = 0;
         #pragma ivdep
         #pragma unroll 1
-        for (uint6 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
+        for (; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
           bram_fifo[fifo_offset + j] = input[input_offset + j];
+        }
+
+        for (; j < BUFFER_SIZE && j + batch_offset < cols + paddingX; ++j) {
+          bram_fifo[fifo_offset + j] = 0.0f;
         }
       }
 
@@ -74,7 +81,7 @@ void convolution7(mm_src & restrict input,
       #pragma max_concurrency 1
       for (uint6 n = 0; n < BUFFER_SIZE; ++n) {
         // Convolution
-        if (n > 2) {
+        if (n > 2 - paddingX) {
           hls_register Numeric tmp_out = 0;
           #pragma unroll
           for (uint2 j = 0; j < 3; ++j) {
