@@ -54,6 +54,58 @@ int test_component_convolver_5_5() {
   return 0;
 }
 
+int test_component_convolver_5_5_padding_1_1() {
+  Numeric arr_weights[3][3] = {
+    { 1.0f, 1.0f, 1.0f },
+    { 2.0f, 2.0f, 2.0f },
+    { 3.0f, 3.0f, 3.0f }
+  };
+
+  Numeric arr_input[5][5] = {
+    /* 0.0f      0.0f, 0.0f, 0.0f, 0.0f, 0.0f,      0.0f */
+    /* 0.0f */ { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }, /* 0.0f */
+    /* 0.0f */ { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }, /* 0.0f */
+    /* 0.0f */ { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }, /* 0.0f */
+    /* 0.0f */ { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }, /* 0.0f */
+    /* 0.0f */ { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }  /* 0.0f */
+    /* 0.0f      0.0f, 0.0f, 0.0f, 0.0f, 0.0f,      0.0f */
+  };
+
+  Numeric arr_output[5][5] = {
+    { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }
+  };
+  Numeric exp_output[5][5] = {
+    { 0.0f, 0.0f, 5.0f, 10.0f, 10.0f },
+    { 0.0f, 0.0f, 6.0f, 12.0f, 12.0f },
+    { 0.0f, 0.0f, 6.0f, 12.0f, 12.0f },
+    { 0.0f, 0.0f, 6.0f, 12.0f, 12.0f },
+    { 0.0f, 0.0f, 5.0f, 10.0f, 10.0f }
+  };
+
+  mm_src mm_src_weights(arr_weights, 9 * sizeof(Numeric));
+  mm_src mm_src_input(arr_input, 25 * sizeof(Numeric));
+  mm_src mm_src_output(arr_output, 25 * sizeof(Numeric));
+
+  Numeric bram_fifo_in0[BUFFER_SIZE * 3];
+  Numeric bram_fifo_out0[BUFFER_SIZE];
+
+  convolution7(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_out0, 0, 5, 5, 1, 1);
+
+  for (int i = 0; i < 5; ++i) {
+    for (int j = 0; j < 5; ++j) {
+      // printf("%f %f\n", NUMERIC_VAL(exp_output[i][j]), NUMERIC_VAL(arr_output[i][j]));
+      if (!fcompare(exp_output[i][j], arr_output[i][j])) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
 int test_component_3_3_convolver_variable() {
   Numeric arr_weights[3][3] = {
     { 0.0f, 1.0f, 2.0f },
