@@ -139,8 +139,8 @@ void bn_activation7(hls_avalon_slave_memory_argument(224*sizeof(Numeric)) Numeri
                     mm_src & restrict output,
                     const uint16 rows,
                     const uint16 cols,
-                    const Numeric beta,
                     const Numeric gamma,
+                    const Numeric beta,
                     const bool write_to_output) {
   for (uint6 i = 0; i < rows; ++i) {
     for (uint6 j = 0; j < cols; ++j) {
