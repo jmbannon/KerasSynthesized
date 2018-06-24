@@ -6,6 +6,7 @@
 
 using namespace ihc;
 
+#define UINT_VAL(val) ((val).to_long())
 
 //////////////////////////////////////////////////////////////////////////////////////////
 #if FPGA_COMPILE
@@ -13,7 +14,6 @@ using namespace ihc;
 #include "HLS/ac_fixed_math.h"
 
 #define NUMERIC_VAL(val) ((val).to_double())
-#define UINT_VAL(val) ((val).to_long())
 typedef ac_fixed<16, 8, true> Numeric;
 typedef mm_master<Numeric, align<16>, latency<0>, dwidth<64> > mm_src;
 
@@ -26,7 +26,6 @@ bool fcompare(Numeric a, Numeric b) {
 #include "math.h"
 
 #define NUMERIC_VAL(val) (val)
-#define UINT_VAL(val) (val)
 
 typedef float Numeric;
 typedef mm_master<Numeric, latency<0> > mm_src;

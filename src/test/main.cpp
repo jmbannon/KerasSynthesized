@@ -62,6 +62,7 @@ void unittest_add_all() {
 	unittest_add("test_tiled_tensor4_chn_chn", test_tiled_tensor4_chn_chn);
 	unittest_break();
 	unittest_add("test_component_convolver_5_5", test_component_convolver_5_5);
+	unittest_add("test_component_convolver_5_5_padding_1_1", test_component_convolver_5_5_padding_1_1);
 	unittest_add(test_component_3_3_convolver_name, test_component_3_3_convolver_variable);
 	unittest_break();
 	unittest_add("test_component_max_pooling_6_6", test_component_max_pooling_6_6);

@@ -83,7 +83,7 @@ int test_component_convolver_5_5_padding_1_1() {
     { 0.0f, 0.0f, 6.0f, 12.0f, 12.0f },
     { 0.0f, 0.0f, 6.0f, 12.0f, 12.0f },
     { 0.0f, 0.0f, 6.0f, 12.0f, 12.0f },
-    { 0.0f, 0.0f, 5.0f, 10.0f, 10.0f }
+    { 0.0f, 0.0f, 3.0f, 6.0f, 6.0f }
   };
 
   mm_src mm_src_weights(arr_weights, 9 * sizeof(Numeric));
