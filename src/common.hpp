@@ -49,5 +49,6 @@ enum Major { ROW_MAJ, COL_MAJ, DEP_MAJ, CHN_MAJ };
 #define INT_DIV_CEIL(a, b) ((a) / (b) + ((a) % (b) > 0))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define POW2(a) ((a) * (a))
 
 #endif

@@ -39,7 +39,7 @@ void unittest_break()
 void unittest_add_all() {
 
 	stringstream ss;
-	ss << CONVOLVER_TEST_INPUT_SIZE;
+	ss << CONVOLVER_INPUT_SIZE;
 	string conv_input_size = ss.str();
 
 	const string test_component_3_3_convolver_name = string("test_component_3_3_convolver_") + conv_input_size + string("_") + conv_input_size;
