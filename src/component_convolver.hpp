@@ -59,7 +59,7 @@ void convolution7(mm_src & restrict input,
         hls_register const uint16 input_offset = (cols * (m + ii - paddingY)) + batch_offset;
         hls_register const uint16 fifo_offset = (ii * BUFFER_SIZE);
 
-        if ((m + ii) < paddingY || (m + ii) > rows) {
+        if ((m + ii) < paddingY || (m + ii) >= rows + paddingY) {
           // printf("ZEROING ROW %ld\n", UINT_VAL(m + ii));
           for (uint6 j = 0; j < BUFFER_SIZE; ++j) {
             bram_fifo[fifo_offset + j] = 0.0f;

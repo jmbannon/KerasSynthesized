@@ -174,9 +174,9 @@ int test_component_3_3_convolver_variable() {
 
       // printf("%lf ", expected_value);
       printf("%lf ", NUMERIC_VAL(output[i][j]));
-  		// if (!fcompare(NUMERIC_VAL(output[i][j]), expected_value)) {
-    //     return 1;
-    //   }
+  		if (!fcompare(NUMERIC_VAL(output[i][j]), expected_value)) {
+        return 1;
+      }
   		
   	}
   	printf("\n");
