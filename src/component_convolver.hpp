@@ -45,7 +45,7 @@ void convolution7(mm_src & restrict input,
       
       hls_register const uint16 output_offset = (m * (cols - 2 + paddingX + paddingX)) + batch_offset;
 
-      // convolver registers
+      // Convolver registers. Set to 0 for left-side padding
       hls_register Numeric shift_registers0[3] = { 0, 0, 0 };
       hls_register Numeric shift_registers1[3] = { 0, 0, 0 };
       hls_register Numeric shift_registers2[3] = { 0, 0, 0 };
@@ -59,23 +59,21 @@ void convolution7(mm_src & restrict input,
         hls_register const uint16 input_offset = (cols * (m + ii - paddingY)) + batch_offset;
         hls_register const uint16 fifo_offset = (ii * BUFFER_SIZE);
 
+        // If row is in padding, set to 0s
         if ((m + ii) < paddingY || (m + ii) >= rows + paddingY) {
-          // printf("ZEROING ROW %ld\n", UINT_VAL(m + ii));
           for (uint6 j = 0; j < BUFFER_SIZE; ++j) {
             bram_fifo[fifo_offset + j] = 0.0f;
           }
+        // Otherwise, copy row from original input
         } else {
-          // printf("COPYING ROW %ld\n", UINT_VAL(m + ii));
           uint6 j = 0;
           #pragma ivdep
           #pragma unroll 1
           for (; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
-            // printf("  %ld <- %ld\n", UINT_VAL(fifo_offset + j), UINT_VAL(input_offset + j));
             bram_fifo[fifo_offset + j] = input[input_offset + j];
           }
-
+          // Pad only right-side of fifo buffer with 0s - left side will be populated in convolver
           for (; j < BUFFER_SIZE && j + batch_offset < cols + paddingX; ++j) {
-            // printf("  %ld <- 0\n", UINT_VAL(fifo_offset + j));
             bram_fifo[fifo_offset + j] = 0.0f;
           }
         }
@@ -91,7 +89,7 @@ void convolution7(mm_src & restrict input,
       #pragma unroll 1
       #pragma max_concurrency 1
       for (uint6 n = 0; n < BUFFER_SIZE; ++n) {
-        // Convolution
+        // Convolution, begin with padding on the left side
         if (n > 2 || (batch_offset == 0 && n > 2 - paddingX)) {
           hls_register Numeric tmp_out = 0;
 
@@ -101,13 +99,6 @@ void convolution7(mm_src & restrict input,
             bram_fifo_out0[n] += shift_registers1[2 - j] * lweights[1][j];
             bram_fifo_out0[n] += shift_registers2[2 - j] * lweights[2][j];
           }
-
-          // if (n < cols + paddingX + paddingX) {
-          //   printf("%lf, %lf, %lf\n", NUMERIC_VAL(shift_registers0[2]), NUMERIC_VAL(shift_registers0[1]), NUMERIC_VAL(shift_registers0[0]));
-          //   printf("%lf, %lf, %lf\n", NUMERIC_VAL(shift_registers1[2]), NUMERIC_VAL(shift_registers1[1]), NUMERIC_VAL(shift_registers1[0]));
-          //   printf("%lf, %lf, %lf\n", NUMERIC_VAL(shift_registers2[2]), NUMERIC_VAL(shift_registers2[1]), NUMERIC_VAL(shift_registers2[0]));
-          //   printf("= %lf\n", bram_fifo_out0[n]);
-          // }
         }
 
         // Shift register values
