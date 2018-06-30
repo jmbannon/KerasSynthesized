@@ -5,15 +5,22 @@
 
 using namespace std;
 
-int main() {
+string dimension_str(uint dim) {
   stringstream ss;
-  ss << CONVOLVER_TEST_INPUT_SIZE;
-  string conv_input_size = ss.str();
-  const string test_name = string("test_component_3_3_convolver_") + conv_input_size + string("_") + conv_input_size;
-  cout << test_name << endl;
+  ss << dim;
+  return ss.str() + string("_") + ss.str();
+}
+
+int main() {
+  const string test_component_3_3_convolver_name = 
+    string("test_component_3_3_convolver_") 
+      + dimension_str(CONVOLVER_INPUT_SIZE) 
+      + string("_padding_") 
+      + dimension_str(CONVOLVER_PADDING_SIZE);
+
+  cout << test_component_3_3_convolver_name << endl;
 
   int ret = test_component_3_3_convolver_variable();
-
   if (ret == 0) {
     printf("PASSED\n");
   } else {
