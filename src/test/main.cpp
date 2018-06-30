@@ -36,13 +36,18 @@ void unittest_break()
 	tests[test_count++] = test;
 }
 
-void unittest_add_all() {
-
+string dimension_str(uint dim) {
 	stringstream ss;
-	ss << CONVOLVER_INPUT_SIZE;
-	string conv_input_size = ss.str();
+	ss << dim;
+	return ss.str() + string("_") + ss.str();
+}
 
-	const string test_component_3_3_convolver_name = string("test_component_3_3_convolver_") + conv_input_size + string("_") + conv_input_size;
+void unittest_add_all() {
+	const string test_component_3_3_convolver_name = 
+		string("test_component_3_3_convolver_") 
+			+ dimension_str(CONVOLVER_INPUT_SIZE) 
+			+ string("_padding_") 
+			+ dimension_str(CONVOLVER_PADDING_SIZE);
 
 	unittest_add("test_tensor3_row", test_tensor3_row);
 	unittest_add("test_tensor3_col", test_tensor3_col);
