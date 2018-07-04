@@ -1,5 +1,14 @@
 import keras
+import argparse
+import re
+import numpy as np
 from collections import Counter
+
+KERAS_APPS = [
+	'xception', 'vgg19', 'vgg16', 'resnet50', 'inception_v3', 
+	'inception_resnet_v2', 'mobilenet', 'densenet121', 'densenet169', 
+	'densenet201', 'nasnet_large', 'nasnet_mobile'
+]
 
 def keras_app(name):
 	if name == 'xception': 
@@ -28,35 +37,6 @@ def keras_app(name):
 		return keras.applications.nasnet.NASNetMobile(input_shape=None, include_top=True, weights='imagenet', input_tensor=None, pooling=None, classes=1000)
 	return None
 
-def keras_apps():
-	return [
-		'xception', 'vgg19', 'vgg16', 'resnet50', 'inception_v3', 
-		'inception_resnet_v2', 'mobilenet', 'densenet121', 'densenet169', 
-		'densenet201', 'nasnet_large', 'nasnet_mobile'
-		]
-
-
-# def evaluate_models():
-	# for model in KERAS_MODELS.values():
-	# 	model_layer_types = {}
-	# 	for layer in model.layers:
-	# 		ltype = layer.__class__.__name__
-	# 		model_layer_types[ltype] = 1
-	# 	for key in model_layer_types.keys():
-	# 		if key in layer_types:
-	# 			layer_types[key] = layer_types[key] + 1
-	# 		else:
-	# 			layer_types[key] = 1
-
-	# print(layer_types)
-	# layer_types_set = list(layer_types)
-	# layer_types_set.sort()
-	# print(layer_types_set)
-
-	# layer_types = list(layer_types)
-	# layer_types.sort()
-	# print(layer_types)
-
 
 def evaluate_model(model_name):
 	model = keras_app(model_name)
@@ -82,35 +62,89 @@ def evaluate_model(model_name):
 	print('kernel_sizes')
 	print(Counter(kernel_sizes).keys())
 	print(Counter(kernel_sizes).values())
-	print('kernel_strides')
+	print('\nkernel_strides')
 	print(Counter(kernel_strides).keys())
 	print(Counter(kernel_strides).values())
-	print('pooling_sizes')
+	print('\npooling_sizes')
 	print(Counter(pooling_sizes).keys())
 	print(Counter(pooling_sizes).values())
 	print('pooling_strides')
 	print(Counter(pooling_strides).keys())
 	print(Counter(pooling_strides).values())
-	print('layer_dims')
+	print('\nlayer_dims')
 	print(Counter(layer_dims).keys())
 	print(Counter(layer_dims).values())
-	print('fc_count')
+	print('\nfc_count')
 	print(fc_count)
-
-
-	# layer_types_set = list(set(layer_types))
-	# layer_types_set.sort()
-
-	# print(layer_types_set)
-
-	# layer_types = list(layer_types)
-	# layer_types.sort()
-	# print(layer_types)
-	# print(list(layer_types).sort())
+	print('\nModel Summary')
 	# keras.utils.print_summary(keras_app(model), line_length=200)
-	# keras.utils.plot_model(model, to_file='model.png', show_shapes=False, show_layer_names=True, rankdir='TB')
+	print(model.summary())
 
-# evaluate_model(keras_model('inception_v3'))
-evaluate_model('vgg16')
-# evaluate_model('nasnet_mobile')
+def compute_padding(conv_layer):
+	np_input_2d = np.array([conv_layer.input_shape[1], conv_layer.input_shape[2]])
+	np_output_2d = np.array([conv_layer.output_shape[1], conv_layer.output_shape[2]])
+	np_kernel = np.array(conv_layer.kernel_size)
+	np_stride = np.array(conv_layer.strides)
+	np_output_2d_no_padding = (((np_input_2d - np_kernel) / np_stride) + 1)
+	padding = np_output_2d - np_output_2d_no_padding
+	return tuple(padding.astype(int))
+
+def evaluate_model2(model_name):
+	model = keras_app(model_name)
+
+	configurations = []
+
+	def format_conf(conf):
+		return re.sub('\s+',' ',conf).strip()
+
+	for layer in model.layers:
+		layer_type = layer.__class__.__name__
+
+		print(f'\n{layer_type}')
+		print(f'Input Shape: {layer.input_shape}')
+		if layer_type == 'Conv2D':
+			padding = compute_padding(layer)
+			configurations.append(format_conf(f"""
+				make test-fpga
+				  LAYER={layer_type} 
+				  INPUT_ROWS={layer.input_shape[1]} 
+				  INPUT_COLS={layer.input_shape[2]}
+				  PADDING_ROWS={padding[0]}
+				  PADDING_COLS={padding[1]} && 
+				./test-fpga
+			"""))
+
+			print(f'Kernel Size: {layer.kernel_size}')
+			print(f'Kernel Strides: {layer.strides}')
+			print(f'Padding Size: {padding}')
+			print(f'Filters: {layer.filters}')
+		elif layer_type == 'ZeroPadding2D':
+			printf(f'Padding Size: {layer.padding}')
+		elif layer_type == 'MaxPooling2D' or layer_type == 'AveragePooling2D':
+			configurations.append(format_conf(f"""
+				make test-fpga
+				  LAYER={layer_type} 
+				  INPUT_ROWS={layer.input_shape[1]} 
+				  INPUT_COLS={layer.input_shape[2]}
+				  POOL_SIZE_ROWS={layer.pool_size[0]}
+				  POOL_SIZE_COLS={layer.pool_size[1]}
+				  POOL_STRIDE_ROWS={layer.strides[0]}
+				  POOL_STRIDE_COLS={layer.strides[1]} && 
+				./test-fpga
+			"""))
+
+			print(f'Pool Size: {layer.pool_size}')
+			print(f'Pool Strides: {layer.strides}')
+		elif layer_type == 'Dense':
+			print(f'TODO')
+		else:
+			print(f'NOT SUPPORTED')
+
+	print('\n'.join(list(set(configurations))))
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Prints summary of Keras model')
+    parser.add_argument('name', type=str, help='Name of keras model', choices=KERAS_APPS)
+    args = parser.parse_args()
+    evaluate_model2(args.name)
 
