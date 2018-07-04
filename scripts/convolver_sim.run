@@ -1,12 +1,11 @@
 #!/bin/bash
 
 dimsize=("224" "112" "56" "28" "14" "7")
-
 cd ../
 
 for var in "${dimsize[@]}"; do
   screen -dmS convolve_$var
-  fpga_cmd="source /home/jb/intelFPGA_lite/17.1/hls/init_hls.sh && cp -R src convolve_${var} && cd convolve_${var} && make test-fpga CONVOLVER_INPUT_SIZE=${var} && ./test-fpga"
+  fpga_cmd="source /home/jb/intelFPGA_lite/17.1/hls/init_hls.sh && cp -R src convolve_${var} && cd convolve_${var} && make test-fpga CONVOLVER_INPUT_SIZE=${var} CONVOLVER_PADDING_SIZE=2 && ./test-fpga"
   fpga_cmd+=$'\n'
   screen -r convolve_$var -X stuff "${fpga_cmd}"
 done
