@@ -108,32 +108,30 @@ int test_component_convolver_5_5_padding_1_1() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CONVOLVER_KERNEL_LEN (3)
-#define CONVOLVER_INPUT_LEN (CONVOLVER_INPUT_SIZE + (CONVOLVER_PADDING_SIZE * 2))
-#define CONVOLVER_OUTPUT_LEN (CONVOLVER_INPUT_LEN - CONVOLVER_KERNEL_LEN + 1)
-
-int test_component_3_3_convolver_variable() {
-
-  Numeric arr_weights[3][3] = {
+int test_component_3_3_convolver_args(uint input_rows, uint input_cols, uint padding_rows, uint padding_cols) {
+  Numeric weights[3][3] = {
     { 0.0f, 1.0f, 2.0f },
     { 0.0f, 1.0f, 2.0f },
     { 0.0f, 1.0f, 2.0f }
   };
 
+  uint kernel_len = 3;
+  uint input_rows_p = input_rows + (2 * padding_cols);
+  uint input_cols_p = input_cols + (2 * padding_cols);
+  uint output_rows = input_rows_p - kernel_len + 1;
+  uint output_cols = input_cols_p - kernel_len + 1;
+
   tensor3 input;
-  tensor3_init(&input, CONVOLVER_INPUT_SIZE, CONVOLVER_INPUT_SIZE, 3, ROW_MAJ);
+  tensor3_init(&input, input_rows, input_cols, 3, ROW_MAJ);
   tensor3_set_data_sequential_row(&input);
 
-  Numeric output[CONVOLVER_OUTPUT_LEN][CONVOLVER_OUTPUT_LEN];
-  for (uint i = 0; i < CONVOLVER_OUTPUT_LEN; ++i) {
-  	for (uint j = 0; j < CONVOLVER_OUTPUT_LEN; ++j) {
-  		output[i][j] = 0.0f;
-  	}
-  }
+  tensor3 output;
+  tensor3_init(&output, output_rows, output_cols, 1, ROW_MAJ);
+  tensor3_set_zero(&output);
 
-  mm_src mm_src_weights(arr_weights, POW2(CONVOLVER_KERNEL_LEN) * sizeof(Numeric));
-  mm_src mm_src_input(input.data, POW2(CONVOLVER_INPUT_SIZE) * sizeof(Numeric));
-  mm_src mm_src_output((Numeric *)output, POW2(CONVOLVER_OUTPUT_LEN) * sizeof(Numeric));
+  mm_src mm_src_weights(weights, POW2(kernel_len) * sizeof(Numeric));
+  mm_src mm_src_input(input.data, input_rows * input_cols * sizeof(Numeric));
+  mm_src mm_src_output(output.data, output_rows * output_cols * sizeof(Numeric));
 
   Numeric bram_fifo_in0[BUFFER_SIZE * 3];
   Numeric bram_fifo_out0[BUFFER_SIZE];
@@ -145,47 +143,54 @@ int test_component_3_3_convolver_variable() {
     bram_fifo_in0,   // input buffer
     bram_fifo_out0,  // output buffer
     0,               // weight offset
-    CONVOLVER_INPUT_SIZE, CONVOLVER_INPUT_SIZE,       // input size
-    CONVOLVER_PADDING_SIZE, CONVOLVER_PADDING_SIZE);  // padding
+    input_rows, input_cols,       // input size
+    padding_rows, padding_cols);  // padding
 
-  for (uint i = 0; i < CONVOLVER_OUTPUT_LEN; i++) {
-  	for (uint j = 0; j < CONVOLVER_OUTPUT_LEN; j++) {
-      uint kernel_rows_non_padding = CONVOLVER_KERNEL_LEN;
+  for (uint i = 0; i < output_rows; i++) {
+    for (uint j = 0; j < output_cols; j++) {
+      uint kernel_rows_non_padding = kernel_len;
+
+      Numeric value = NUMERIC_VAL(tensor3_val(&output, i, j, 0));
       Numeric expected_value = 0;
 
       // Kernel has row(s) within padding
-      if (i < CONVOLVER_PADDING_SIZE) {
+      if (i < padding_rows) {
         // top portion of padding
-        kernel_rows_non_padding = CONVOLVER_KERNEL_LEN - (CONVOLVER_PADDING_SIZE - i);
-      } else if (i >= CONVOLVER_OUTPUT_LEN - CONVOLVER_PADDING_SIZE) {
+        kernel_rows_non_padding = kernel_len - (padding_rows - i);
+      } else if (i >= output_rows - padding_rows) {
         // bottom portion of padding
-        kernel_rows_non_padding = (CONVOLVER_OUTPUT_LEN - i);
+        kernel_rows_non_padding = (input_rows - (i - padding_rows));
       }
 
-      for (uint k = 0; k < CONVOLVER_KERNEL_LEN; ++k) {
+      for (uint k = 0; k < kernel_len; ++k) {
         uint input_col = j + k;
-
         // Kernel column is NOT within padding
-        if (!(input_col < CONVOLVER_PADDING_SIZE || input_col >= CONVOLVER_INPUT_SIZE + CONVOLVER_PADDING_SIZE)) {
+        if (!(input_col < padding_cols || input_col >= input_cols + padding_cols)) {
                             // col of original input  // multiply by kernel value // multiply by number of kernel values not in padding
-          expected_value += (input_col - CONVOLVER_PADDING_SIZE) * k * kernel_rows_non_padding;
+          expected_value += (input_col - padding_cols) * k * kernel_rows_non_padding;
         }
       }
 
       // printf("%lf ", expected_value);
-      // printf("%lf ", NUMERIC_VAL(output[i][j]));
-  		if (!fcompare(NUMERIC_VAL(output[i][j]), expected_value)) {
+      // printf("%lf ",value);
+      if (!fcompare(value, expected_value)) {
         return 1;
       }
-  		
-  	}
-  	// printf("\n");
+      
+    }
+    // printf("\n");
   }
 
   return 0;
-
 }
 
+int test_component_3_3_convolver_variable() {
+  return test_component_3_3_convolver_args(CONVOLVER_INPUT_SIZE, CONVOLVER_INPUT_SIZE, CONVOLVER_PADDING_SIZE, CONVOLVER_PADDING_SIZE);
+}
+
+int test_component_convolver_3_3_on_224_224_padding_1_1() {
+  return test_component_3_3_convolver_args(224, 224, 1, 1);
+}
 
 
 #endif

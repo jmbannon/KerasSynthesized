@@ -69,6 +69,7 @@ void unittest_add_all() {
 	unittest_add("test_component_convolver_5_5", test_component_convolver_5_5);
 	unittest_add("test_component_convolver_5_5_padding_1_1", test_component_convolver_5_5_padding_1_1);
 	unittest_add(test_component_3_3_convolver_name, test_component_3_3_convolver_variable);
+	unittest_add("test_component_convolver_3_3_on_224_224_padding_1_1", test_component_convolver_3_3_on_224_224_padding_1_1);
 	unittest_break();
 	unittest_add("test_component_max_pooling_6_6", test_component_max_pooling_6_6);
 	unittest_add("test_component_avg_pooling_6_6", test_component_avg_pooling_6_6);
