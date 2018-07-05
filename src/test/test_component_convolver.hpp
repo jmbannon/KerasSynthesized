@@ -216,7 +216,7 @@ int test_component_3_3_convolver_args(uint input_rows,
 }
 
 int test_component_3_3_convolver_variable() {
-  return test_component_3_3_convolver_args(CONVOLVER_INPUT_SIZE, CONVOLVER_INPUT_SIZE, CONVOLVER_PADDING_SIZE, CONVOLVER_PADDING_SIZE, 0, 0);
+  return test_component_3_3_convolver_args(CONVOLVER_INPUT_SIZE, CONVOLVER_INPUT_SIZE, 0, 0, CONVOLVER_PADDING_SIZE, CONVOLVER_PADDING_SIZE);
 }
 
 int test_component_convolver_3_3_on_224_224_padding_1_1() {
