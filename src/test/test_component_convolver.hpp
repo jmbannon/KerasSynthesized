@@ -220,7 +220,7 @@ int test_component_3_3_convolver_variable() {
 }
 
 int test_component_convolver_3_3_on_224_224_padding_1_1() {
-  return test_component_3_3_convolver_args(5, 5, 1, 1, 1, 1);
+  return test_component_3_3_convolver_args(224, 224, 1, 1, 1, 1);
 }
 
 
