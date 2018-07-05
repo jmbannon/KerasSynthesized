@@ -46,9 +46,9 @@ void convolution8(mm_src & restrict input,
       hls_register const uint16 output_offset = ((m + paddingY) * (cols - 2 + (paddingX * 2))) + batch_offset + paddingX;
 
       // convolver registers
-      hls_register Numeric shift_registers0[3];
-      hls_register Numeric shift_registers1[3];
-      hls_register Numeric shift_registers2[3];
+      Numeric shift_registers0[3];
+      Numeric shift_registers1[3];
+      Numeric shift_registers2[3];
 
       // Loads data into registers and local storage
       #pragma ivdep
@@ -124,7 +124,8 @@ void activation7(hls_avalon_slave_memory_argument(224*sizeof(Numeric)) Numeric *
                 const bool write_to_output) {
   for (uint6 i = 0; i < rows; ++i) {
     for (uint6 j = 0; j < cols; ++j) {
-      input[(i * cols) + j] = MAX(input[(i * cols) + j], 0.0);
+      Numeric zero = 0.0;
+      input[(i * cols) + j] = MAX(input[(i * cols) + j], zero);
     }
   }
 
@@ -147,7 +148,9 @@ void bn_activation7(hls_avalon_slave_memory_argument(224*sizeof(Numeric)) Numeri
                     const bool write_to_output) {
   for (uint6 i = 0; i < rows; ++i) {
     for (uint6 j = 0; j < cols; ++j) {
-      input[(i * cols) + j] = MAX((input[(i * cols) + j] * gamma) + beta, 0.0);
+      Numeric value = (input[(i * cols) + j] * gamma) + beta;
+      Numeric zero = 0.0;
+      input[(i * cols) + j] = MAX(value, zero);
     }
   }
 

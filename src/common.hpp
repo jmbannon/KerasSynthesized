@@ -12,8 +12,10 @@ using namespace ihc;
 #if FPGA_COMPILE
 
 #include "HLS/ac_fixed_math.h"
+#include "HLS/math.h"
 
 #define NUMERIC_VAL(val) ((val).to_double())
+
 typedef ac_fixed<16, 8, true> Numeric;
 typedef mm_master<Numeric, align<16>, latency<0>, dwidth<64> > mm_src;
 
@@ -46,9 +48,9 @@ bool fcompare(Numeric a, Numeric b) {
 
 enum Major { ROW_MAJ, COL_MAJ, DEP_MAJ, CHN_MAJ };
 
-#define INT_DIV_CEIL(a, b) ((a) / (b) + ((a) % (b) > 0))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define INT_DIV_CEIL(a, b) ((a) / (b) + ((a) % (b) > 0))
 #define POW2(a) ((a) * (a))
 
 #endif
