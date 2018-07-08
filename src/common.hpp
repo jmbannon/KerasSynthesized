@@ -39,7 +39,7 @@ bool fcompare(Numeric a, Numeric b) {
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////
 
-#define BUFFER_SIZE 85
+#define BUFFER_SIZE 7
 #define BUFFER_LOAD_PIPELINE 1
 
 #ifndef CONVOLVER_TEST_INPUT_SIZE

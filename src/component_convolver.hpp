@@ -22,18 +22,14 @@ void convolution8(mm_src & restrict input,
                   hls_avalon_slave_register_argument uint16 weight_offset,
                   hls_avalon_slave_register_argument uint16 rows,
                   hls_avalon_slave_register_argument uint16 cols,
+                  hls_avalon_slave_register_argument uint16 buffer_cols,
                   hls_avalon_slave_register_argument uint3 paddingY,
                   hls_avalon_slave_register_argument uint3 paddingX) {
   #pragma max_concurrency 1
   for (uint16 m = 0; m < rows - 2; ++m) {
     #pragma max_concurrency 1
     for (uint16 batch_offset = 0; batch_offset < cols; batch_offset += (BUFFER_SIZE - 3)) {
-      hls_register const uint16 output_offset = ((m + paddingY) * (cols - 2 + (paddingX * 2))) + batch_offset + paddingX;
-
-      // convolver registers
-      Numeric shift_registers0[3];
-      Numeric shift_registers1[3];
-      Numeric shift_registers2[3];
+      hls_register const uint16 output_offset = ((m + paddingY) * (buffer_cols)) + batch_offset + paddingX;
 
       // Loads data into registers and local storage
       #pragma ivdep
@@ -41,61 +37,45 @@ void convolution8(mm_src & restrict input,
       #pragma unroll 1
       #pragma max_concurrency 1
       for (uint3 ii = 0; ii < 3; ++ii) {
-        hls_register const uint16 input_offset = (cols * (m + ii)) + batch_offset;
+        hls_register const uint16 input_offset = (buffer_cols * (m + ii)) + batch_offset;
         hls_register const uint16 fifo_offset = (ii * BUFFER_SIZE);
 
         #pragma ivdep
         #pragma unroll 1
-        for (uint8 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
+        for (uint8 j = 0; j < BUFFER_SIZE; ++j) {
           bram_fifo[fifo_offset + j] = input[input_offset + j];
         }
       }
 
       #pragma ivdep
       #pragma unroll 1
-      for (uint8 j = 0; j < BUFFER_SIZE - 3 && j + batch_offset < cols - 2; ++j) {
-        bram_fifo_out0[j + 3] = output[output_offset + j];
+      for (uint8 j = 0; j < BUFFER_SIZE - 2; ++j) {
+        bram_fifo_out0[j] = output[output_offset + j];
       }
 
       // Convolve on entire buffer
       #pragma unroll 1
       #pragma max_concurrency 1
-      for (uint8 n = 0; n < BUFFER_SIZE && n + batch_offset <= cols; ++n) {
+      #pragma ivdep
+      for (uint8 n = 0; n < BUFFER_SIZE - 3; ++n) {
         // Convolution
-        if (n > 2) {
-          hls_register Numeric tmp_out = 0;
-          #pragma unroll
-          for (uint2 j = 0; j < 3; ++j) {
-            bram_fifo_out0[n] += shift_registers0[2 - j] * lweights[(0 * 3) + j];
-            bram_fifo_out0[n] += shift_registers1[2 - j] * lweights[(1 * 3) + j];
-            bram_fifo_out0[n] += shift_registers2[2 - j] * lweights[(2 * 3) + j];
-          }
-        }
-
-        // Shift register values
         #pragma unroll
-        for (uint2 j = 2; j > 0; --j) {
-          shift_registers0[j] = shift_registers0[j - 1];
+        for (uint2 j = 0; j < 3; ++j) {
+          bram_fifo_out0[n] += bram_fifo[(0 * BUFFER_SIZE) + n + j] * lweights[(0 * 3) + j];
+          bram_fifo_out0[n] += bram_fifo[(1 * BUFFER_SIZE) + n + j] * lweights[(1 * 3) + j];
+          bram_fifo_out0[n] += bram_fifo[(2 * BUFFER_SIZE) + n + j] * lweights[(2 * 3) + j];
         }
-        shift_registers0[0] = bram_fifo[(BUFFER_SIZE * 0) + n];
-
-        #pragma unroll
-        for (uint2 j = 2; j > 0; --j) {
-          shift_registers1[j] = shift_registers1[j - 1];
-        }
-        shift_registers1[0] = bram_fifo[(BUFFER_SIZE * 1) + n];
-
-        #pragma unroll
-        for (uint2 j = 2; j > 0; --j) {
-          shift_registers2[j] = shift_registers2[j - 1];
-        }
-        shift_registers2[0] = bram_fifo[(BUFFER_SIZE * 2) + n];
       }
 
       #pragma ivdep
       #pragma unroll 1
-      for (uint8 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
-        output[output_offset + n] = bram_fifo_out0[n + 3];
+      for (uint8 n = 0; n < BUFFER_SIZE - 2; ++n) {
+        if (batch_offset + n < cols - 2) {
+          output[output_offset + n] = bram_fifo_out0[n];
+        } else {
+          output[output_offset + n] = 0.0;
+        }
+        
       }
     }
   }

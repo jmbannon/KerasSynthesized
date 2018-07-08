@@ -60,6 +60,10 @@ int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, 
   return 0;
 }
 
+int tiled_tensor3_init_padding(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, uint tile_rows, uint tile_cols, uint tile_depth, Major maj_t, Major tile_maj, uint paddingY, uint paddingX) {
+  return tiled_tensor3_init(tensor, rows + (2 * paddingY), cols + (2 * paddingX), depth, tile_rows, tile_cols, tile_depth, maj_t, tile_maj);
+}
+
 inline Numeric* tiled_tensor3_tile(tiled_tensor3 *t, uint row_t, uint col_t, uint dep_t) {
   uint idx_t = tensor3_idx_raw(t->tile_maj, t->rows_t, t->cols_t, t->depth_t, row_t, col_t, dep_t);
   return &t->data[idx_t * t->tile_vol];
@@ -68,7 +72,6 @@ inline Numeric* tiled_tensor3_tile(tiled_tensor3 *t, uint row_t, uint col_t, uin
 inline uint tiled_tensor3_idx_raw(Major maj_t, uint rows_t, uint cols_t, uint depth_t, 
                                   Major tile_maj, uint tile_rows, uint tile_cols, uint tile_depth, 
                                   uint row, uint col, uint dep) {
-
   uint tile_vol = tile_rows * tile_cols * tile_depth;
 
   uint row_t = row / tile_rows;
@@ -102,6 +105,52 @@ int tiled_tensor3_set_data(tiled_tensor3 *t, Numeric *data) {
   return 0;
 }
 
+int tiled_tensor3_set_val(tiled_tensor3 *t, Numeric val) {
+  for (uint i = 0; i < t->depth; i++) {
+    for (uint j = 0; j < t->rows; j++) {
+      for (uint k = 0; k < t->cols; k++) {
+        t->data[tiled_tensor3_idx(t, j, k, i)] = val;
+      }
+    }
+  }
+  return 0;
+}
+
+int tiled_tensor3_set_zero(tiled_tensor3 *t) {
+  return tiled_tensor3_set_val(t, 0.0);
+}
+
+int tiled_tensor3_set_data_sequential_raw(tiled_tensor3 *t, bool row, int paddingY, int paddingX) {
+  for (uint i = 0; i < t->depth; i++) {
+    for (uint j = 0; j < t->rows; j++) {
+      for (uint k = 0; k < t->cols; k++) {
+        Numeric val = 0.0;
+        if (j >= paddingY && j < t->rows - paddingY && k >= paddingX && k < t->cols - paddingX) {
+          val = row ? (Numeric)(k - paddingX) : (Numeric)(j - paddingY);
+        }
+        t->data[tiled_tensor3_idx(t, j, k, i)] = val;
+      }
+    }
+  }
+  return 0;
+}
+
+int tiled_tensor3_set_data_sequential_row(tiled_tensor3 *t) {
+  return tiled_tensor3_set_data_sequential_raw(t, true, 0, 0);
+}
+
+int tiled_tensor3_set_data_sequential_row_padding(tiled_tensor3 *t, int paddingY, int paddingX) {
+  return tiled_tensor3_set_data_sequential_raw(t, true, paddingY, paddingX);
+}
+
+int tiled_tensor3_set_data_sequential_col(tiled_tensor3 *t) {
+  return tiled_tensor3_set_data_sequential_raw(t, false, 0, 0);
+}
+
+int tiled_tensor3_set_data_sequential_col_padding(tiled_tensor3 *t, int paddingY, int paddingX) {
+  return tiled_tensor3_set_data_sequential_raw(t, false, paddingY, paddingX);
+}
+
 void tiled_tensor3_print(tiled_tensor3 *t) {
   for (uint i = 0; i < t->depth; i++) {
     for (uint j = 0; j < t->rows; j++) {
@@ -117,7 +166,7 @@ void tiled_tensor3_print(tiled_tensor3 *t) {
         if (k > 0 && k % t->tile_cols == 0) {
           printf(" | ");
         }
-        printf("%f, ", tiled_tensor3_val(t, j, k, i));
+        printf("%lf, ", NUMERIC_VAL(tiled_tensor3_val(t, j, k, i)));
       }
       printf("\n");
     }
