@@ -16,33 +16,18 @@ using namespace ihc;
 component
 void convolution8(mm_src & restrict input,
                   mm_src & restrict output,
-                  mm_src & restrict weights,
+                  hls_avalon_slave_memory_argument(3*3*sizeof(Numeric)) Numeric * lweights,
                   hls_avalon_slave_memory_argument(BUFFER_SIZE*3*sizeof(Numeric)) Numeric * restrict bram_fifo,
                   hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_out0,
-                  const uint16 weight_offset,
-                  const uint16 rows,
-                  const uint16 cols,
-                  const uint3 paddingY,
-                  const uint3 paddingX) {
-  // convolver weights
-  hls_register Numeric lweights[3][3];
-
-  // loads weights (test within function)
-  #pragma loop_coalesce 2
-  #pragma unroll 1
-  for (uint2 i = 0; i < 3; ++i) {
-    #pragma unroll 1
-    for (uint2 j = 0; j < 3; ++j) {
-      lweights[i][j] = weights[weight_offset + (i * 3) + j];
-    }
-  }
-
+                  hls_avalon_slave_register_argument uint16 weight_offset,
+                  hls_avalon_slave_register_argument uint16 rows,
+                  hls_avalon_slave_register_argument uint16 cols,
+                  hls_avalon_slave_register_argument uint3 paddingY,
+                  hls_avalon_slave_register_argument uint3 paddingX) {
   #pragma max_concurrency 1
   for (uint16 m = 0; m < rows - 2; ++m) {
     #pragma max_concurrency 1
     for (uint16 batch_offset = 0; batch_offset < cols; batch_offset += (BUFFER_SIZE - 3)) {
-
-      
       hls_register const uint16 output_offset = ((m + paddingY) * (cols - 2 + (paddingX * 2))) + batch_offset + paddingX;
 
       // convolver registers
@@ -61,29 +46,29 @@ void convolution8(mm_src & restrict input,
 
         #pragma ivdep
         #pragma unroll 1
-        for (uint6 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
+        for (uint8 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
           bram_fifo[fifo_offset + j] = input[input_offset + j];
         }
       }
 
       #pragma ivdep
       #pragma unroll 1
-      for (uint6 j = 0; j < BUFFER_SIZE - 3 && j + batch_offset < cols - 2; ++j) {
+      for (uint8 j = 0; j < BUFFER_SIZE - 3 && j + batch_offset < cols - 2; ++j) {
         bram_fifo_out0[j + 3] = output[output_offset + j];
       }
 
       // Convolve on entire buffer
       #pragma unroll 1
       #pragma max_concurrency 1
-      for (uint6 n = 0; n < BUFFER_SIZE; ++n) {
+      for (uint8 n = 0; n < BUFFER_SIZE && n + batch_offset <= cols; ++n) {
         // Convolution
         if (n > 2) {
           hls_register Numeric tmp_out = 0;
           #pragma unroll
           for (uint2 j = 0; j < 3; ++j) {
-            bram_fifo_out0[n] += shift_registers0[2 - j] * lweights[0][j];
-            bram_fifo_out0[n] += shift_registers1[2 - j] * lweights[1][j];
-            bram_fifo_out0[n] += shift_registers2[2 - j] * lweights[2][j];
+            bram_fifo_out0[n] += shift_registers0[2 - j] * lweights[(0 * 3) + j];
+            bram_fifo_out0[n] += shift_registers1[2 - j] * lweights[(1 * 3) + j];
+            bram_fifo_out0[n] += shift_registers2[2 - j] * lweights[(2 * 3) + j];
           }
         }
 
@@ -109,7 +94,7 @@ void convolution8(mm_src & restrict input,
 
       #pragma ivdep
       #pragma unroll 1
-      for (uint6 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
+      for (uint8 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
         output[output_offset + n] = bram_fifo_out0[n + 3];
       }
     }
