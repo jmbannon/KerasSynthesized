@@ -1,3 +1,14 @@
 counter/test-*
 .DS_Store
 *__pycache__*
+latex/LICENSE
+latex/README
+latex/uwthesis.aux
+latex/uwthesis.bbl
+latex/uwthesis.blg
+latex/uwthesis.lof
+latex/uwthesis.log
+latex/uwthesis.pdf
+latex/uwthesis.synctex.gz
+latex/uwthesis.toc
+latex/uwthesis_session.txss
