@@ -108,25 +108,9 @@
 % ----- abstract
 %
 
+\input{abstract}
 
 \setcounter{page}{-1}
-\abstract{%
-Deep learning continues to be the revolutionary method used in pattern recognition applications including image, video, and speech processing. Convolutional Neural Networks (CNNs) in particular have outperformed every competitor in image classification benchmarks, but suffer from high computation and storage complexities. It is becoming more apparent to extend this breakthrough technology to embedded applications that demand low power and mission critical response times. Consequently, embedded CNNs deployed on the edge require compact platforms capable of accelerated computing. Field Programmable Gate Arrays (FPGAs) have recently been explored to satisfy these needs. However, their varying number of resources introduces the problem of how to create an optimal ASIC design of a CNN that maximizes hardware utilization and energy efficiency to support real-time applications. Previous works have explored methods to optimize convolution computation within FPGAs. Conversely, many designs only consider only a limited number of FPGAs and CNNs, restricting their usage to a small subset of possible CNN-FPGA configurations. In this work, we propose building a composer capable of choosing optimal design techniques for CNN-FPGA implementations based on CNN and FPGA parameters. This could enable the deployment of any CNN to the edge using any FPGA, while exhausting all available resources for peak performance. Our composer’s logic will be motivated by runtime analysis of existing convolutional computation units (CCUs) on diverse CNN architectures and FPGA resources. Our composer will then be used in Keras Synthesized, a framework that generates high-level synthesis (HLS) code from trained CNNs.
- 
-\begin{itemize}
-\item It describes the use of a specialized
-macro package developed specifically for thesis production
-at the University.
-The macros customize \LaTeX\ for the correct thesis style,
-allowing the student to concentrate on the substance of
-his or her text.%
-\footnote{See Appendix A to obtain the source to this
- thesis and the class file.}
-\item It demonstrates the solutions to a variety of
-formatting challenges found in thesis production.
-\item It serves as a template for a real dissertation.
-\end{itemize}
-}
  
 %
 % ----- contents & etc.
@@ -138,40 +122,17 @@ formatting challenges found in thesis production.
 %
 % ----- glossary 
 %
-\chapter*{Glossary}      % starred form omits the `chapter x'
-\addcontentsline{toc}{chapter}{Glossary}
-\thispagestyle{plain}
-%
-\begin{glossary}
-\item[HDL] Hardware definition language, syntax used to describe a hardware design.
-\item[FPGA] Field programmable gate array, an integrated circuit designed for consumers to reconfigure with custom ASIC designs via HDL.
-\item[HLS] High level synthesis, an abstraction layer for designing HDL in high level languages such as C.
-\item[CNN] Convolutional neural network, a class of feed-forward neural networks that uses convolution to detect spacial features.
-\item[CCU] Convolutional computation unit, a component within an FPGA that computes convolution layers of a CNN.
-\item[MAC] Multiply-accumulate operation.
-\item[BRAM] Limited on-chip random access memory within an FPGA.
-\item[DRAM] Off-chip random access memory accessible by an FPGA.
-\item[DSP] Digital signal processor, an FPGA resource notably used to compute floating point operations.
-\item[LE] Logic element, an FPGA resource that perform logic functions, including logic gates, registers, and multiplexers.
- 
-\end{glossary}
+\input{glossary}
  
 %
 % ----- acknowledgments
 %
-\acknowledgments{% \vskip2pc
-  % {\narrower\noindent
-  The author wishes to express sincere appreciation to
-  University of Washington, where he has had the opportunity
-  to work with the \TeX\ formatting system,
-  and to the author of \TeX, Donald Knuth, {\it il miglior fabbro}.
-  % \par}
-}
+\input{acknowledgments}
 
 %
 % ----- dedication
 %
-\dedication{\begin{center}To my loving fiance, Natasha.\end{center}}
+%\dedication{\begin{center}To my loving fiance, Natasha.\end{center}}
 
 %
 % end of the preliminary pages
@@ -185,67 +146,9 @@ formatting challenges found in thesis production.
 \textpages
  
 % ========== Chapter 1
+ \input{introduction}
  
-\chapter {Introduction}
- 
-The utility of a clean, professionally prepared thesis is well
-documented%
-\footnote{See, for example,
-  W.~Shakespeare\cite{Hamlet} for a recent discussion.}
-and, even if you never intend to actually print your thesis,
-you still ought to format it as if that were your intention.
- 
-\TeX\ facilitates that. It is a flexible,
-complete and professional typesetting system.
-It will produce {\bf pdf} output as required by the Graduate School.
-
-\section{The Purpose of This Sample Thesis}
- 
-This sample is both a demonstration of the quality and
-propriety of a \LaTeX formatted thesis and  
-documentation for its preparation.
-It has made extensive use of a custom class file
-developed specifically for this purpose
-at the University of Washington.  Chapter~II discusses
-\TeX\ and \LaTeX.
-Chapter III describes the additional macros and functions
-provided by the custom thesis class file.  Finally, Chapter IV hopes to tie things up.
- 
-It is 
-impossible to predict all the formatting problems one will encounter
-and there will be problems that are best handled
-by a specialist.  
-The Graduate School may be able to help you find help.
-Some departments may also be able to provide \LaTeX\ assistance.
- 
- 
-\section{Conventions and Notations}
- 
-In this thesis the typist
-refers to the user of \LaTeX---the one who
-makes formatting decisions and chooses the appropriate
-formatting commands.
-He or she will most often be the degree candidate.
- 
-This document deals with \LaTeX\ typesetting commands and their
-functions.  Wherever possible the conventions used to display
-text entered by the typist and the resulting formatted output
-are the same as those used by the \TeX books.
-Therefore, {\tt typewriter type} is used to indicate text
-as typed by the computer
-or entered by the typist.
-It is quite the opposite of {\it italics,} which indicates
-a category rather than exact text.  For example,
-{\tt alpha} and {\tt beta} might each be an example of a {\it label}.
- 
- 
-\section{Nota bene}
- 
-This sample thesis was produced by the \LaTeX\ document class it describes
-and its format is consonant with the Graduate School's electronic dissertation guidelines,
-as of November, 2014, at least.
-However, use of this package does not guarantee acceptability
-of a particular thesis.
+ \input{background}
  
  
 % ========== Chapter 2
