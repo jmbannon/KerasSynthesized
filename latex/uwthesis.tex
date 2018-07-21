@@ -40,7 +40,7 @@
 %    Printed in twoside style now that that's allowed
 %
  
-\documentclass [11pt, proquest] {uwthesis}[2016/11/22]
+\documentclass [11pt, proquest] {uwthesis}[2015/03/03]
  
 %
 % The following line would print the thesis in a postscript font 
@@ -146,12 +146,14 @@
 \textpages
  
 % ========== Chapter 1
- \input{introduction}
+\input{introduction}
  
- \input{background}
+\input{background}
  
- \input{relatedworks}
+\input{relatedworks}
  
+\nocite{*}
+\bibliographystyle{plain}
 \bibliography{uwthesis}
 
 \end{document}
