@@ -24,12 +24,14 @@ void convolution8(mm_src & restrict input,
                   hls_avalon_slave_register_argument uint16 weight_offset,
                   hls_avalon_slave_register_argument uint16 rows,
                   hls_avalon_slave_register_argument uint16 cols,
-                  hls_avalon_slave_register_argument uint3 paddingY,
-                  hls_avalon_slave_register_argument uint3 paddingX) {
+                  hls_avalon_slave_register_argument uint8 paddingY,
+                  hls_avalon_slave_register_argument uint8 paddingX) {
   #pragma max_concurrency 1
   for (uint16 m = 0; m < rows - 2; ++m) {
     #pragma max_concurrency 1
+    #pragma unroll 1
     for (uint16 batch_offset = 0; batch_offset < cols; batch_offset += (BUFFER_SIZE - 3)) {
+                                                // current row     // number of columns         //offset
       hls_register const uint16 output_offset = ((m + paddingY) * (cols - 2 + (paddingX * 2))) + batch_offset + paddingX;
 
       // convolver registers
@@ -39,6 +41,8 @@ void convolution8(mm_src & restrict input,
 
       // Loads data into registers and local storage
       #pragma ivdep
+      #pragma unroll 1
+      #pragma max_concurrency 1
       for (uint8 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
         bram_fifo0[j] = input[(cols * (m + 0)) + batch_offset + j];
         bram_fifo1[j] = input[(cols * (m + 1)) + batch_offset + j];
@@ -46,6 +50,7 @@ void convolution8(mm_src & restrict input,
       }
 
       #pragma ivdep
+      #pragma unroll 1
       for (uint8 j = 0; j < BUFFER_SIZE - 3 && j + batch_offset < cols - 2; ++j) {
         bram_fifo_out0[j + 3] = output[output_offset + j];
       }
@@ -53,7 +58,6 @@ void convolution8(mm_src & restrict input,
       // Convolve on entire buffer
       #pragma unroll 1
       #pragma max_concurrency 1
-      #pragma ivdep safelen(3)
       for (uint8 n = 0; n < BUFFER_SIZE && n + batch_offset <= cols; ++n) {
         // Convolution
         if (n > 2) {
@@ -87,6 +91,7 @@ void convolution8(mm_src & restrict input,
       }
 
       #pragma ivdep
+      #pragma unroll 1
       for (uint8 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
         output[output_offset + n] = bram_fifo_out0[n + 3];
       }
