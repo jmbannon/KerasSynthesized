@@ -17,7 +17,9 @@ component
 void convolution8(mm_src & restrict input,
                   mm_src & restrict output,
                   hls_avalon_slave_memory_argument(3*3*sizeof(Numeric)) Numeric * lweights,
-                  hls_avalon_slave_memory_argument(BUFFER_SIZE*3*sizeof(Numeric)) Numeric * restrict bram_fifo,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo0,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo1,
+                  hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo2,
                   hls_avalon_slave_memory_argument(BUFFER_SIZE*sizeof(Numeric)) Numeric * restrict bram_fifo_out0,
                   hls_avalon_slave_register_argument uint16 weight_offset,
                   hls_avalon_slave_register_argument uint16 rows,
@@ -37,22 +39,13 @@ void convolution8(mm_src & restrict input,
 
       // Loads data into registers and local storage
       #pragma ivdep
-      #pragma loop_coalesce 2
-      #pragma unroll 1
-      #pragma max_concurrency 1
-      for (uint3 ii = 0; ii < 3; ++ii) {
-        hls_register const uint16 input_offset = (cols * (m + ii)) + batch_offset;
-        hls_register const uint16 fifo_offset = (ii * BUFFER_SIZE);
-
-        #pragma ivdep
-        #pragma unroll 1
-        for (uint8 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
-          bram_fifo[fifo_offset + j] = input[input_offset + j];
-        }
+      for (uint8 j = 0; j < BUFFER_SIZE && j + batch_offset < cols; ++j) {
+        bram_fifo0[j] = input[(cols * (m + 0)) + batch_offset + j];
+        bram_fifo1[j] = input[(cols * (m + 1)) + batch_offset + j];
+        bram_fifo2[j] = input[(cols * (m + 2)) + batch_offset + j];
       }
 
       #pragma ivdep
-      #pragma unroll 1
       for (uint8 j = 0; j < BUFFER_SIZE - 3 && j + batch_offset < cols - 2; ++j) {
         bram_fifo_out0[j + 3] = output[output_offset + j];
       }
@@ -60,6 +53,7 @@ void convolution8(mm_src & restrict input,
       // Convolve on entire buffer
       #pragma unroll 1
       #pragma max_concurrency 1
+      #pragma ivdep safelen(3)
       for (uint8 n = 0; n < BUFFER_SIZE && n + batch_offset <= cols; ++n) {
         // Convolution
         if (n > 2) {
@@ -77,23 +71,22 @@ void convolution8(mm_src & restrict input,
         for (uint2 j = 2; j > 0; --j) {
           shift_registers0[j] = shift_registers0[j - 1];
         }
-        shift_registers0[0] = bram_fifo[(BUFFER_SIZE * 0) + n];
+        shift_registers0[0] = bram_fifo0[n];
 
         #pragma unroll
         for (uint2 j = 2; j > 0; --j) {
           shift_registers1[j] = shift_registers1[j - 1];
         }
-        shift_registers1[0] = bram_fifo[(BUFFER_SIZE * 1) + n];
+        shift_registers1[0] = bram_fifo1[n];
 
         #pragma unroll
         for (uint2 j = 2; j > 0; --j) {
           shift_registers2[j] = shift_registers2[j - 1];
         }
-        shift_registers2[0] = bram_fifo[(BUFFER_SIZE * 2) + n];
+        shift_registers2[0] = bram_fifo2[n];
       }
 
       #pragma ivdep
-      #pragma unroll 1
       for (uint8 n = 0; n < BUFFER_SIZE - 3 && n + batch_offset < cols - 2; ++n) {
         output[output_offset + n] = bram_fifo_out0[n + 3];
       }

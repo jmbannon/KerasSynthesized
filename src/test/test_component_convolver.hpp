@@ -38,10 +38,12 @@ int test_component_convolver_5_5() {
   mm_src mm_src_input(arr_input, 25 * sizeof(Numeric));
   mm_src mm_src_output(arr_output, 9 * sizeof(Numeric));
 
-  Numeric bram_fifo_in0[BUFFER_SIZE * 3];
+  Numeric bram_fifo_in0[BUFFER_SIZE];
+  Numeric bram_fifo_in1[BUFFER_SIZE];
+  Numeric bram_fifo_in2[BUFFER_SIZE];
   Numeric bram_fifo_out0[BUFFER_SIZE];
 
-  convolution8(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_out0, 0, 5, 5, 0, 0);
+  convolution8(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_in1, bram_fifo_in2, bram_fifo_out0, 0, 5, 5, 0, 0);
 
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
@@ -94,10 +96,12 @@ int test_component_convolver_5_5_padding_1_1() {
   mm_src mm_src_input(arr_input, 7 * 7 * sizeof(Numeric));
   mm_src mm_src_output(arr_output, 7 * 9 * sizeof(Numeric));
 
-  Numeric bram_fifo_in0[BUFFER_SIZE * 3];
+  Numeric bram_fifo_in0[BUFFER_SIZE];
+  Numeric bram_fifo_in1[BUFFER_SIZE];
+  Numeric bram_fifo_in2[BUFFER_SIZE];
   Numeric bram_fifo_out0[BUFFER_SIZE];
 
-  convolution8(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_out0, 0, 7, 7, 1, 2);
+  convolution8(mm_src_input, mm_src_output, mm_src_weights, bram_fifo_in0, bram_fifo_in1, bram_fifo_in2, bram_fifo_out0, 0, 7, 7, 1, 2);
 
   for (int i = 0; i < 5; ++i) {
     for (int j = 0; j < 5; ++j) {
@@ -142,14 +146,16 @@ int test_component_3_3_convolver_args(uint input_rows,
   mm_src mm_src_input(input.data, input.rows * input.cols * sizeof(Numeric));
   mm_src mm_src_output(output.data, output.rows * output.cols * sizeof(Numeric));
 
-  Numeric bram_fifo_in0[BUFFER_SIZE * 3];
+  Numeric bram_fifo_in0[BUFFER_SIZE];
+  Numeric bram_fifo_in1[BUFFER_SIZE];
+  Numeric bram_fifo_in2[BUFFER_SIZE];
   Numeric bram_fifo_out0[BUFFER_SIZE];
 
   convolution8(
     mm_src_input,    // input
     mm_src_output,   // output
     mm_src_weights,  // weights
-    bram_fifo_in0,   // input buffer
+    bram_fifo_in0, bram_fifo_in1, bram_fifo_in2,  // input buffers
     bram_fifo_out0,  // output buffer
     0,               // weight offset
     input.rows, input.cols,       // input size
