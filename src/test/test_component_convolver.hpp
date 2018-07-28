@@ -161,6 +161,8 @@ int test_component_3_3_convolver_args(uint input_rows,
     input.rows, input.cols,       // input size
     output_padding_rows, output_padding_cols);  // padding
 
+  // tensor3_print(&output);
+
   // Checks convolution values
   for (uint i = 0; i < output_rows; i++) {
     for (uint j = 0; j < output_cols; j++) {
@@ -188,7 +190,7 @@ int test_component_3_3_convolver_args(uint input_rows,
       }
 
       // printf("%lf ", expected_value);
-      // printf("%lf ",value);
+      // printf("%lf ", NUMERIC_VAL(value));
       if (!fcompare(value, expected_value)) {
         return 1;
       }
