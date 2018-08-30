@@ -52,7 +52,7 @@ int test_component_oom_5_5() {
     3, 3, 1,
     ROW_MAJ, ROW_MAJ);
 
-  convolution9(mm_src_input, mm_src_output, mm_src_weights, in, out, 1, 0, 0);
+  convolution9(mm_src_input, mm_src_output, mm_src_weights, in, out, 0, 0, 0);
 
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {

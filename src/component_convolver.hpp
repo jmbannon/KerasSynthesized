@@ -126,12 +126,15 @@ void convolution9(mm_src & restrict input,
       uint32 input_offset = ROW3_MAJ_IDX_RAW(input_tensor.rows_t, input_tensor.cols_t, i, j, depth) * input_tensor.tile_vol;
       uint32 output_offset = ROW3_MAJ_IDX_RAW(output_tensor.rows_t, output_tensor.cols_t, i, j, depth) * output_tensor.tile_vol;
 
+      printf("here1 %ld %ld\n", UINT_VAL(input_offset), UINT_VAL(output_offset));
       for (uint4 ii = 0; ii < input_tensor.tile_rows; ++ii) {
         for (uint4 jj = 0; jj < input_tensor.tile_cols; ++jj) {
+          // printf("%ld <- %ld\n", UINT_VAL((input_tensor.tile_cols * ii) + jj), UINT_VAL(input_offset + (input_tensor.tile_cols * ii) + jj));
           tile_in[(input_tensor.tile_cols * ii) + jj] = input[input_offset + (input_tensor.tile_cols * ii) + jj];
         }
       }
 
+      printf("here2\n");
       for (uint4 ii = 0; ii < output_tensor.tile_rows; ++ii) {
         for (uint4 jj = 0; jj < output_tensor.tile_cols; ++jj) {
           tile_out[(output_tensor.tile_cols * ii) + jj] = output[output_offset + (output_tensor.tile_cols * ii) + jj];
@@ -139,6 +142,7 @@ void convolution9(mm_src & restrict input,
       }
 
 
+      printf("here3\n");
       Numeric PE_ARR[PE_ARRAY_ROWS][PE_ARRAY_COLS];
       for (uint4 ii = 0; ii < PE_ARRAY_ROWS; ++ii) {
         for (uint4 jj = 0; jj < PE_ARRAY_COLS; ++jj) {
@@ -146,32 +150,38 @@ void convolution9(mm_src & restrict input,
         }
       }
 
+      printf("here4\n");
       uint8 curr_row = 0;
       uint8 curr_col = 0;
-
+      uint8 curr_MAC = 0;
       //////////////////////////////////////////////////////////////////////////
       // CONVOLUTION
-      do {
+      for (uint8 curr_mac = 0; curr_mac < (input_tensor.tile_rows - 2) * (input_tensor.tile_cols - 2); ++curr_mac) {
+
+        printf("%ld, %ld\n", UINT_VAL(curr_row), UINT_VAL(curr_col));
 
         for (uint4 ii = 0; ii < PE_ARRAY_ROWS; ++ii) {
           for (uint4 jj = 0; jj < PE_ARRAY_COLS; ++jj) {
+            printf("%lf ", NUMERIC_VAL(PE_ARR[ii][jj]));
             tile_out[(output_tensor.tile_cols * (ii + curr_row)) + jj + curr_col] += PE_ARR[ii][jj] * lweights[curr_row * 3 + curr_col];
           }
+          printf("\n");
         }
+        printf("\n");
 
         //
         //////////////////////////////////////////////////////////////////////////
         // TRAVERSAL
 
         // Traversing right
-        if (curr_row % 2 == 0 && curr_col + 1 < input_tensor.tile_rows) {
+        if (curr_row % 2 == 0 && curr_col + 1 < input_tensor.tile_rows - 2) {
           ++curr_col;
 
           // shift PE array left, load new elements
           #pragma unroll
-          for (uint2 m = 0; m < PE_ARRAY_ROWS; ++m) {
+          for (uint3 m = 0; m < PE_ARRAY_ROWS; ++m) {
             #pragma unroll
-            for (uint2 n = 1; n < PE_ARRAY_COLS; ++n) {
+            for (uint3 n = 1; n < PE_ARRAY_COLS; ++n) {
               PE_ARR[m][n - 1] = PE_ARR[m][n];
             }
 
@@ -185,9 +195,9 @@ void convolution9(mm_src & restrict input,
 
           // shift PE array right, load new elements
           #pragma unroll
-          for (uint2 m = 0; m < PE_ARRAY_ROWS; ++m) {
+          for (uint3 m = 0; m < PE_ARRAY_ROWS; ++m) {
             #pragma unroll
-            for (uint2 n = PE_ARRAY_COLS; n > 0; --n) {
+            for (uint3 n = PE_ARRAY_COLS - 1; n > 0; --n) {
               PE_ARR[m][n] = PE_ARR[m][n - 1];
             }
 
@@ -195,25 +205,32 @@ void convolution9(mm_src & restrict input,
             PE_ARR[m][0] = tile_in[tile_in_idx];
           }
         // Traversing down on left or right
-        } else if (curr_col == 0 || curr_col == input_tensor.tile_rows - 1) {
+        } else if (curr_col == 0 || curr_col == input_tensor.tile_cols - 3) {
           ++curr_row;
 
           // shift PE array up, load new elements
           #pragma unroll
-          for (uint2 n = 0; n < PE_ARRAY_COLS; ++n) {
+          for (uint3 n = 0; n < PE_ARRAY_COLS; ++n) {
             #pragma unroll
-            for (uint2 m = 1; m < PE_ARRAY_ROWS; ++m) {
+            for (uint3 m = 1; m < PE_ARRAY_ROWS; ++m) {
               PE_ARR[m - 1][n] = PE_ARR[m][n];
             }
 
             uint32 tile_in_idx = (input_tensor.tile_cols * (curr_row + PE_ARRAY_ROWS - 1)) + n + curr_col;
             PE_ARR[PE_ARRAY_ROWS - 1][n] = tile_in[tile_in_idx];
           }
-          
         }
-      } while (curr_row != input_tensor.tile_rows - 1 && (curr_col != -1 || curr_col != input_tensor.tile_rows));
-      //
-      //////////////////////////////////////////////////////////////////////////
+        //
+        //////////////////////////////////////////////////////////////////////////
+      }
+
+      for (uint4 ii = 0; ii < output_tensor.tile_rows; ++ii) {
+        for (uint4 jj = 0; jj < output_tensor.tile_cols; ++jj) {
+          output[output_offset + (output_tensor.tile_cols * ii) + jj] = tile_out[(output_tensor.tile_cols * ii) + jj];
+        }
+      }
+
+
 
 
     }
