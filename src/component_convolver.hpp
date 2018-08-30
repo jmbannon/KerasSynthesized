@@ -99,6 +99,147 @@ void convolution8(mm_src & restrict input,
   }
 }
 
+#define PE_ARRAY_ROWS 3
+#define PE_ARRAY_COLS 3
+
+// OOM
+component
+void convolution9(mm_src & restrict input,
+                  mm_src & restrict output,
+                  hls_avalon_slave_memory_argument(3*3*sizeof(Numeric)) Numeric * lweights,
+                  // output buffer should fill up a single tile
+                  tiled_tensor3 input_tensor, // change to raw params
+                  hls_avalon_slave_register_argument uint8 depth,
+                  hls_avalon_slave_register_argument uint8 nr_kernels,
+                  hls_avalon_slave_register_argument uint8 paddingY,
+                  hls_avalon_slave_register_argument uint8 paddingX) {
+
+
+  for (uint8 i = 0; i < input_tensor->rows_t; ++i) {
+    for (uint8 j = 0; j < input_tensor->cols_t; ++j) {
+
+
+      Numeric *tile_in = tiled_tensor3_tile(input_tensor, i, j, depth);
+      Numeric *tile_out = tiled_tensor3_tile(output_tensor, i, j, depth);
+
+      Numeric PE_ARR[PE_ARRAY_ROWS][PE_ARRAY_COLS];
+      for (uint4 ii = 0; ii < PE_ARRAY_ROWS; ++ii) {
+        for (uint4 jj = 0; jj < PE_ARRAY_COLS; ++jj) {
+          PE_ARR[ii][jj] = tile_in[ii][jj];
+        }
+      }
+
+      uint8 curr_row = 0;
+      uint8 curr_col = 0;
+      do {
+
+
+        //////////////////////////////////////////////////////////////////////////
+        // CONVOLUTION
+
+        for (uint4 ii = 0; ii < PE_ARRAY_ROWS; ++ii) {
+          for (uint4 jj = 0; jj < PE_ARRAY_COLS; ++jj) {
+            tile_out[ii + curr_row][jj + curr_col] = PE_ARR[ii][jj] * lweights[curr_row][curr_col];
+          }
+        }
+
+        //
+        //////////////////////////////////////////////////////////////////////////
+        // TRAVERSAL
+
+        // Traversing right
+        if (curr_row % 2 == 0 && curr_col + 1 < input_tensor->tile_rows) {
+          ++curr_col;
+
+          // shift PE array left, load new elements
+          #pragma unroll
+          for (uint2 m = 0; m < PE_ARRAY_ROWS; ++m) {
+            #pragma unroll
+            for (uint2 n = 1; n < PE_ARRAY_COLS; ++n) {
+              PE_ARR[m][n - 1] = PE_ARR[m][n];
+            }
+            PE_ARR[m][PE_ARRAY_COLS - 1] = tile_in[m + curr_row][PE_ARRAY_COLS - 1 + curr_col];
+          }
+
+        // Traversing left
+        } else if (curr_row % 2 == 1 && curr_col - 1 >= 0) { 
+          --curr_col;
+
+          // shift PE array right, load new elements
+          #pragma unroll
+          for (uint2 m = 0; m < PE_ARRAY_ROWS; ++m) {
+            #pragma unroll
+            for (uint2 n = PE_ARRAY_COLS; n > 0; --n) {
+              PE_ARR[m][n] = PE_ARR[m][n - 1];
+            }
+            PE_ARR[m][0] = tile_in[m + curr_row][curr_col];
+          }
+        // Traversing down on left or right
+        } else if (curr_col == 0 || curr_col == input_tensor->tile_rows - 1) {
+          ++curr_row;
+
+          // shift PE array up, load new elements
+          #pragma unroll
+          for (uint2 n = 0; m < PE_ARRAY_COLS; ++n) {
+            #pragma unroll
+            for (uint2 m = 1; m < PE_ARRAY_ROWS; ++m) {
+              PE_ARR[m - 1][n] = PE_ARR[m][n];
+            }
+            PE_ARR[PE_ARRAY_ROWS - 1][n] = tile_in[PE_ARRAY_ROWS - 1 + curr_row][n + curr_col];
+          }
+          
+        }
+
+        //
+        //////////////////////////////////////////////////////////////////////////
+
+
+
+      } while (curr_row != tile_in->tile_rows - 1 && (curr_col != -1 || curr_col != tile_in->tile_rows));
+
+
+    }
+  }
+
+}
+
+// POOM
+//
+// component
+// void convolution9(mm_src & restrict input,
+//                   mm_src & restrict output,
+//                   hls_avalon_slave_memory_argument(3*3*sizeof(Numeric)) Numeric * lweights,
+//                   // output buffer should fill up a single tile
+//                   tiled_tensor3 input_tensor, // change to raw params
+//                   hls_avalon_slave_register_argument uint8 nr_kernels,
+//                   hls_avalon_slave_register_argument p,
+//                   hls_avalon_slave_register_argument uint8 paddingY,
+//                   hls_avalon_slave_register_argument uint8 paddingX) {
+//   // Load single tile's channels successively
+//   // Partial sums are reused until tile of output map is complete
+//   // store final output maps after pooling
+
+//   for (uint8 i = 0; i < input_tensor.rows_t; ++i) {
+//     for (uint8 j = 0; j < input_tensor.cols_t; ++j) {
+//       for (uint8 k = 0; k < nr_kernels / p; k += p) {             // p: Number of kernel maps to compute in parallel to account for stride, typically stride^2
+//         for (uint8 l = 0; l < input_tensor.depth_t; ++l) {      
+          
+
+//           // load input tiles (i,j,k+0) .. (i,j,k+p-1)
+//           // load kernels k+0 .. k+p-1
+
+//           // zigzag on row
+//           //   multiply (i,j,k+0) w0_0, (i,j,k+1) w0_1, .. 
+//           //   store in output buffer
+//           //   shift right/down/left (the zigzag) by stride, repeat
+          
+//         }
+//       }
+//     }
+//   }
+
+// }
+
 component
 void activation7(hls_avalon_slave_memory_argument(224*sizeof(Numeric)) Numeric * restrict input,
                 mm_src & restrict output,
