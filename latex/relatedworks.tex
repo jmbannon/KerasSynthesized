@@ -9,6 +9,13 @@ The convolver \cite{liu2016automatic} exploits pipelined parallelism by using a 
 
 Their experimental results only consider two sequential models, AlexNet \cite{krizhevsky2012imagenet} and LeNet \cite{lecun1998gradient}. Their FPGA is large enough to map each layer onto the FPGA. Within AlexNet are kernel sizes of 11x11, 7x7, and 3x3. Three independent convolvers of each size are needed to support all convolution layers. In the case where FPGA resources are limited, there may not be enough DSPs to account for all CCUs. Alternatively, when there are sufficient resources for each CCU, each one needs a sufficient memory buffer to avoid stalling. Otherwise, bottlenecks will occur in the pipeline, causing convolvers to not be fully utilized. They do not elaborate on how their framework can be used to mitigate this problem. Lastly, the convolver is not optimal for convolutions with stride greater than one. The computation is not coalesced, and requires overhead to orchestrate either the data access pattern or convolver input, both of which can also stall the pipeline.
 
+\begin{figure}
+		\includegraphics[scale=0.35]{ConvolverDiagram}
+		\caption[Convolver Diagram]%
+		{\narrower Convolver with a 3x3 kernel. Loads three rows into RAM and performs a sliding window to load values into registers and compute the convolution.}
+		\label{control-file}
+\end{figure}
+
 \subsection{Output Oriented Mapping}
 Previous works consider Output Oriented Mapping (OOM) \cite{zhang2015optimizing, chen2017eyeriss, rahman2016efficient}, which loads an input map into its CCU and performs convolution using a single weight in all processing elements (PEs). Both OOM and convolver exploit data reusability via sliding window interconnects between PE registers. The benefit of OOM is it can support various kernel sizes with a fixed number of DSPs without having to allocate k-by-k DSPs for each weight in a kernel. However, OOM too suffers from stride greater than one for the same reasons as convolver.
 

@@ -1,5 +1,6 @@
 \chapter{Methodology}
 \section{Implementation}
 Each CCU is written and tested in C for compilation via the Intel HLS Compiler. Our code is structured such that its logic mimics what is found in their original implementations to the best of our ability. Subsequent diagrams do not have a one-to-one correspondance with their actual hardware implementation due to the HLS translation. Floating point quantization is set to 16 bit precision throughout all implementations.
+
 \section{Benchmarking}
 Experiments are performed using the ModelSim FPGA simulator. Each benchmark is ran using artifical data with input dimensionality and kernel sizes set to estimate the full performance of a CNN-FPGA implementation. We measure the number of cycles it takes for each component to run from start-to-finish, and use the simulated clock speed to output a runtime.
