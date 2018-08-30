@@ -7,6 +7,7 @@
 #include "test_tiled_tensor3.hpp"
 #include "test_tiled_tensor4.hpp"
 #include "test_component_convolver.hpp"
+#include "test_component_oom.hpp"
 #include "test_component_pooling.hpp"
 #include "test_component_activation.hpp"
 
@@ -76,6 +77,8 @@ void unittest_add_all() {
 	unittest_break();
 	unittest_add("test_component_relu_6_6", test_component_relu_6_6);
 	unittest_add("test_component_bn_relu_6_6", test_component_bn_relu_6_6);
+	unittest_break();
+	unittest_add("test_component_oom_5_5", test_component_oom_5_5);
 	unittest_break();
 }
 

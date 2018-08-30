@@ -34,7 +34,7 @@ typedef struct tiled_tensor3_ {
   uint size;
 } tiled_tensor3;
 
-int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, uint tile_rows, uint tile_cols, uint tile_depth, Major maj_t, Major tile_maj) {
+int tiled_tensor3_init_dims(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, uint tile_rows, uint tile_cols, uint tile_depth, Major maj_t, Major tile_maj) {
   tensor->rows = rows;
   tensor->cols = cols;
   tensor->depth = depth;
@@ -53,6 +53,11 @@ int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, 
   tensor->maj_t = maj_t;
 
   tensor->size = tensor->tile_vol * tensor->vol_t;
+  return 0;
+}
+
+int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, uint tile_rows, uint tile_cols, uint tile_depth, Major maj_t, Major tile_maj) {
+  tiled_tensor3_init_dims(tensor, rows, cols, depth, tile_rows, tile_cols, tile_depth, maj_t, tile_maj);
   tensor->data = (Numeric *)malloc(tensor->size * sizeof(Numeric));
   if (tensor->data == NULL) {
     return 1;
