@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include "test/test_component_convolver.hpp"
+#include "test/test_component_oom.hpp"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ int main() {
 
   cout << test_component_3_3_convolver_name << endl;
 
-  int ret = test_component_3_3_convolver_variable();
+  int ret = test_component_oom_5_5();
   if (ret == 0) {
     printf("PASSED\n");
   } else {
