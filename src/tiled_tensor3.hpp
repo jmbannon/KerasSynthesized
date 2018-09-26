@@ -136,4 +136,23 @@ void tiled_tensor3_print(tiled_tensor3 *t) {
   }
 }
 
+void tiled_tensor3_set_val(tiled_tensor3 *t, uint row, uint col, uint dep, Numeric val) {
+  t->data[tiled_tensor3_idx(t, row, col, dep)] = val;
+}
+
+int tiled_tensor3_set_data_sequential_raw(tiled_tensor3 *t, bool row, int paddingY, int paddingX) {
+  for (uint i = 0; i < t->depth; i++) {
+    for (uint j = 0; j < t->rows; j++) {
+      for (uint k = 0; k < t->cols; k++) {
+        Numeric val = 0.0;
+        if (j >= paddingY && j < t->rows - paddingY && k >= paddingX && k < t->cols - paddingX) {
+          val = row ? (Numeric)(k - paddingX) : (Numeric)(j - paddingY);
+        }
+        tiled_tensor3_set_val(t, j, k, i, val);
+      }
+    }
+  }
+  return 0;
+}
+
 #endif
