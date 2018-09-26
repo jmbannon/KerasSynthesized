@@ -126,7 +126,7 @@ void convolution9(mm_src & restrict input,
       uint32 input_offset = ROW3_MAJ_IDX_RAW(input_tensor.rows_t, input_tensor.cols_t, i, j, depth) * input_tensor.tile_vol;
       uint32 output_offset = ROW3_MAJ_IDX_RAW(output_tensor.rows_t, output_tensor.cols_t, i, j, depth) * output_tensor.tile_vol;
 
-      // printf("here1 %ld %ld\n", UINT_VAL(input_offset), UINT_VAL(output_offset));
+      // Loads the input tile
       for (uint4 ii = 0; ii < input_tensor.tile_rows; ++ii) {
         for (uint4 jj = 0; jj < input_tensor.tile_cols; ++jj) {
           // printf("%ld <- %ld\n", UINT_VAL((input_tensor.tile_cols * ii) + jj), UINT_VAL(input_offset + (input_tensor.tile_cols * ii) + jj));
@@ -134,7 +134,7 @@ void convolution9(mm_src & restrict input,
         }
       }
 
-      // printf("here2\n");
+      // Loads the output tile
       for (uint4 ii = 0; ii < output_tensor.tile_rows; ++ii) {
         for (uint4 jj = 0; jj < output_tensor.tile_cols; ++jj) {
           tile_out[(output_tensor.tile_cols * ii) + jj] = output[output_offset + (output_tensor.tile_cols * ii) + jj];
@@ -142,7 +142,7 @@ void convolution9(mm_src & restrict input,
       }
 
 
-      // printf("here3\n");
+      // Buffers values from tile_into PE_ARR in order to unroll convolution loop
       Numeric PE_ARR[PE_ARRAY_ROWS][PE_ARRAY_COLS];
       for (uint4 ii = 0; ii < PE_ARRAY_ROWS; ++ii) {
         for (uint4 jj = 0; jj < PE_ARRAY_COLS; ++jj) {
@@ -150,9 +150,10 @@ void convolution9(mm_src & restrict input,
         }
       }
 
-      // printf("here4\n");
+      // Current indices of output tile
       uint8 curr_row = 0;
       uint8 curr_col = 0;
+
       //////////////////////////////////////////////////////////////////////////
       // CONVOLUTION
       for (uint8 curr_mac = 0; curr_mac < (input_tensor.tile_rows - 2) * (input_tensor.tile_cols - 2); ++curr_mac) {

@@ -21,6 +21,7 @@ typedef struct tiled_tensor3_ {
   uint tile_depth;
   uint tile_rows;
   uint tile_cols;
+  uint tile_area;
   uint tile_vol;
   Major tile_maj;
 
@@ -43,6 +44,7 @@ int tiled_tensor3_init_dims(tiled_tensor3 *tensor, uint rows, uint cols, uint de
   tensor->tile_rows = tile_rows;
   tensor->tile_cols = tile_cols;
   tensor->tile_depth = tile_depth;
+  tensor->tile_area = tile_rows * tile_cols;
   tensor->tile_vol = tile_rows * tile_cols * tile_depth;
   tensor->tile_maj = tile_maj;
 
