@@ -140,7 +140,7 @@ int test_component_3_3_convolver_args(uint input_rows,
 
   tensor3 output;
   tensor3_init_padding(&output, output_rows, output_cols, 1, ROW_MAJ, output_padding_rows, output_padding_cols);
-  tensor3_set_zero(&output);
+  tensor3_fill_zero(&output);
 
   mm_src mm_src_weights(weights, POW2(kernel_len) * sizeof(Numeric));
   mm_src mm_src_input(input.data, input.rows * input.cols * sizeof(Numeric));

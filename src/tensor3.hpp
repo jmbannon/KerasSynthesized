@@ -144,7 +144,7 @@ int tensor3_set_data_sequential_raw(tensor3 *t, bool row, int paddingY, int padd
   return 0;
 }
 
-int tensor3_set_val(tensor3 *t, Numeric val) {
+int tensor3_fill_val(tensor3 *t, Numeric val) {
   for (uint i = 0; i < t->depth; i++) {
     for (uint j = 0; j < t->rows; j++) {
       for (uint k = 0; k < t->cols; k++) {
@@ -155,8 +155,8 @@ int tensor3_set_val(tensor3 *t, Numeric val) {
   return 0;
 }
 
-int tensor3_set_zero(tensor3 *t) {
-  return tensor3_set_val(t, 0.0);
+int tensor3_fill_zero(tensor3 *t) {
+  return tensor3_fill_val(t, 0.0);
 }
 
 int tensor3_set_data_sequential_row(tensor3 *t) {
