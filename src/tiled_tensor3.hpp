@@ -67,6 +67,10 @@ int tiled_tensor3_init(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, 
   return 0;
 }
 
+int tensor3_init_padding(tiled_tensor3 *tensor, uint rows, uint cols, uint depth, uint tile_rows, uint tile_cols, uint tile_depth, Major maj_t, Major tile_maj, uint paddingY, uint paddingX) {
+  return tiled_tensor3_init(tensor, rows + (2 * paddingY), cols + (2 * paddingX), depth, tile_rows, tile_cols, tile_depth, maj_t, tile_maj);
+}
+
 inline Numeric* tiled_tensor3_tile(tiled_tensor3 *t, uint row_t, uint col_t, uint dep_t) {
   uint idx_t = tensor3_idx_raw(t->tile_maj, t->rows_t, t->cols_t, t->depth_t, row_t, col_t, dep_t);
   return &t->data[idx_t * t->tile_vol];
