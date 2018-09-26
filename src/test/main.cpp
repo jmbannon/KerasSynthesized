@@ -79,6 +79,7 @@ void unittest_add_all() {
 	unittest_add("test_component_bn_relu_6_6", test_component_bn_relu_6_6);
 	unittest_break();
 	unittest_add("test_component_oom_5_5", test_component_oom_5_5);
+	unittest_add("test_component_oom_tiles_3_2__5_5", test_component_oom_tiles_3_2__5_5);
 	unittest_break();
 }
 
