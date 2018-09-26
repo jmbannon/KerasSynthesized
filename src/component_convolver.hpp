@@ -192,53 +192,97 @@ void convolution9(mm_src & restrict input,
     //////////////////////////////////////////////////////////////////////////
     // TRAVERSAL
 
-    // Traversing right
-    if (curr_row % 2 == 0 && curr_col + 1 < input_tensor.tile_rows - 2) {
+    uint1 right = (curr_row % 2 == 0 && curr_col + 1 < input_tensor.tile_rows - 2);
+    uint1 left = (curr_row % 2 == 1 && curr_col - 1 >= 0);
+    uint1 down = (curr_col == 0 || curr_col == input_tensor.tile_cols - 3);
+
+    if (right) {
+      printf("SHIFT RIGHT\n");
       ++curr_col;
-
-      // shift PE array left, load new elements
-      #pragma unroll
-      for (uint3 m = 0; m < PE_ARRAY_ROWS; ++m) {
-        #pragma unroll
-        for (uint3 n = 1; n < PE_ARRAY_COLS; ++n) {
-          PE_ARR[m][n - 1] = PE_ARR[m][n];
-        }
-
-        uint32 tile_in_idx = (input_tensor.tile_cols * (m + curr_row)) + PE_ARRAY_COLS - 1 + curr_col;
-        PE_ARR[m][PE_ARRAY_COLS - 1] = tile_in[tile_in_idx];
-      }
-
-    // Traversing left
-    } else if (curr_row % 2 == 1 && curr_col - 1 >= 0) { 
+    } else if (left) {
+      printf("SHIFT LEFT\n");
       --curr_col;
-
-      // shift PE array right, load new elements
-      #pragma unroll
-      for (uint3 m = 0; m < PE_ARRAY_ROWS; ++m) {
-        #pragma unroll
-        for (uint3 n = PE_ARRAY_COLS - 1; n > 0; --n) {
-          PE_ARR[m][n] = PE_ARR[m][n - 1];
-        }
-
-        uint32 tile_in_idx = (input_tensor.tile_cols * (m + curr_row)) + curr_col;
-        PE_ARR[m][0] = tile_in[tile_in_idx];
-      }
-    // Traversing down on left or right
-    } else if (curr_col == 0 || curr_col == input_tensor.tile_cols - 3) {
+    } else if (down) {
+      printf("SHIFT DOWN\n");
       ++curr_row;
+    }
 
-      // shift PE array up, load new elements
-      #pragma unroll
+    for (uint3 m = 0; m < PE_ARRAY_ROWS; ++m) {
       for (uint3 n = 0; n < PE_ARRAY_COLS; ++n) {
-        #pragma unroll
-        for (uint3 m = 1; m < PE_ARRAY_ROWS; ++m) {
-          PE_ARR[m - 1][n] = PE_ARR[m][n];
-        }
 
-        uint32 tile_in_idx = (input_tensor.tile_cols * (curr_row + PE_ARRAY_ROWS - 1)) + n + curr_col;
-        PE_ARR[PE_ARRAY_ROWS - 1][n] = tile_in[tile_in_idx];
+        if ((curr_row % 2 == 0 && curr_col + 1 < input_tensor.tile_rows - 2) && n == PE_ARRAY_COLS - 1) { // Traversing right & right-end
+          printf("Traverse right & right-end\n");
+          PE_ARR[m][n] = tile_in[(input_tensor.tile_cols * (m + curr_row)) + PE_ARRAY_COLS - 1 + curr_col];
+        } else if (curr_row % 2 == 0 && curr_col + 1 < input_tensor.tile_rows - 2) { // Traversing right 
+          printf("Traverse right\n");
+          PE_ARR[m][n] = PE_ARR[m][n + 1];
+        } else if ((curr_row % 2 == 1 && curr_col - 1 >= 0) && n == 0) { // Traversing left & left-end
+          printf("Traverse left & left-end\n");
+          PE_ARR[m][n] = tile_in[(input_tensor.tile_cols * (m + curr_row)) + curr_col];
+        } else if (curr_row % 2 == 1 && curr_col - 1 >= 0) { // Traversing left
+          printf("Traverse left\n");
+          PE_ARR[m][n] = PE_ARR[m][n - 1];
+        } else if ((curr_col == 0 || curr_col == input_tensor.tile_cols - 3) && m == PE_ARRAY_ROWS - 1) { // Traversing down & down-end
+          printf("Traverse down & down-end\n");
+          uint32 tile_idx = (input_tensor.tile_cols * (curr_row + PE_ARRAY_ROWS - 1)) + n + curr_col;
+          PE_ARR[m][n] = tile_in[tile_idx];
+        } else if (curr_col == 0 || curr_col == input_tensor.tile_cols - 3) { // Traversing down
+          printf("Traverse down\n");
+          PE_ARR[m][n] = PE_ARR[m + 1][n];
+        }
       }
     }
+
+    
+
+
+    // // Traversing right
+    // if (curr_row % 2 == 0 && curr_col + 1 < input_tensor.tile_rows - 2) {
+    //   ++curr_col;
+
+    //   // shift PE array left, load new elements
+    //   #pragma unroll
+    //   for (uint3 m = 0; m < PE_ARRAY_ROWS; ++m) {
+    //     #pragma unroll
+    //     for (uint3 n = 1; n < PE_ARRAY_COLS; ++n) {
+    //       PE_ARR[m][n - 1] = PE_ARR[m][n];
+    //     }
+
+    //     uint32 tile_in_idx = (input_tensor.tile_cols * (m + curr_row)) + PE_ARRAY_COLS - 1 + curr_col;
+    //     PE_ARR[m][PE_ARRAY_COLS - 1] = tile_in[tile_in_idx];
+    //   }
+
+    // // Traversing left
+    // } else if (curr_row % 2 == 1 && curr_col - 1 >= 0) { 
+    //   --curr_col;
+
+    //   // shift PE array right, load new elements
+    //   #pragma unroll
+    //   for (uint3 m = 0; m < PE_ARRAY_ROWS; ++m) {
+    //     #pragma unroll
+    //     for (uint3 n = PE_ARRAY_COLS - 1; n > 0; --n) {
+    //       PE_ARR[m][n] = PE_ARR[m][n - 1];
+    //     }
+
+    //     uint32 tile_in_idx = (input_tensor.tile_cols * (m + curr_row)) + curr_col;
+    //     PE_ARR[m][0] = tile_in[tile_in_idx];
+    //   }
+    // // Traversing down on left or right
+    // } else if (curr_col == 0 || curr_col == input_tensor.tile_cols - 3) {
+    //   ++curr_row;
+
+    //   // shift PE array up, load new elements
+    //   #pragma unroll
+    //   for (uint3 m = 1; m < PE_ARRAY_ROWS; ++m) {
+    //     #pragma unroll
+    //     for (uint3 n = 0; n < PE_ARRAY_COLS; ++n) {
+    //       PE_ARR[m - 1][n] = PE_ARR[m][n];
+    //     }
+
+    //     uint32 tile_in_idx = (input_tensor.tile_cols * (curr_row + PE_ARRAY_ROWS - 1)) + n + curr_col;
+    //     PE_ARR[PE_ARRAY_ROWS - 1][n] = tile_in[tile_in_idx];
+    //   }
+    // }
     //
     //////////////////////////////////////////////////////////////////////////
   }
