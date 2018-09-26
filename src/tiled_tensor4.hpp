@@ -126,7 +126,7 @@ void tiled_tensor4_print(tiled_tensor4 *t) {
           if (k > 0 && k % t->tile_cols == 0) {
             printf(" | ");
           }
-          printf("%f, ", tiled_tensor4_val(t, j, k, i, c));
+          printf("%f, ", NUMERIC_VAL(tiled_tensor4_val(t, j, k, i, c)));
         }
         printf("\n");
       }

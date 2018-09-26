@@ -1,4 +1,4 @@
-SOURCE_MAIN   := counter.cpp
+SOURCE_MAIN   := main.cpp
 TEST_MAIN     := test/main.cpp
 SOURCE_FILES  := 
 

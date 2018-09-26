@@ -8,6 +8,8 @@
 
 #include "tensor3.hpp"
 #include "tensor4.hpp"
+#include "tiled_tensor3.hpp"
+#include "tiled_tensor4.hpp"
 #include "common.hpp"
 
 using namespace ihc;
