@@ -1,3 +1,4 @@
+test-x86-64
 counter/test-*
 .DS_Store
 *__pycache__*
