@@ -4,7 +4,7 @@ SOURCE_FILES  :=
 
 HLS_CXX_FLAGS := 
 CXX := i++
-override CXXFLAGS := $(CXXFLAGS) --fp-relaxed -I/usr/include/c++/4.4.7 -I/usr/include/c++/4.4.7/x86_64-linux-gnu -L/home/jb/intelFPGA_lite/17.1/hls/linux64/lib/dspba/linux64
+override CXXFLAGS := $(CXXFLAGS) --fp-relaxed -I/usr/include/c++/4.4.7 -I/usr/include/c++/4.4.7/x86_64-linux-gnu
 VERBOSE := 1
 
 ifeq ($(CONVOLVER_INPUT_SIZE),)
