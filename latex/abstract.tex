@@ -1,17 +1,17 @@
 \abstract{%
-Deep learning continues to be the revolutionary method used in pattern recognition applications including image, video, and speech processing. Convolutional Neural Networks (CNNs) in particular have outperformed every competitor in image classification benchmarks, but suffer from high computation and storage complexities. It is becoming more apparent to extend this breakthrough technology to embedded applications that demand low power and mission critical response times. Consequently, embedded CNNs deployed on the edge require compact platforms capable of accelerated computing. Field Programmable Gate Arrays (FPGAs) have recently been explored to satisfy these needs. However, their varying number of resources introduces the problem of how to create an optimal ASIC design of a CNN that maximizes hardware utilization and energy efficiency to support real-time applications. Previous works have explored methods to optimize convolution computation within FPGAs. Conversely, many designs only consider only a limited number of FPGAs and CNNs, restricting their usage to a small subset of possible CNN-FPGA configurations. In this work, we propose building a composer capable of choosing optimal design techniques for CNN-FPGA implementations based on CNN and FPGA parameters. This could enable the deployment of any CNN to the edge using any FPGA, while exhausting all available resources for peak performance. Our composer’s logic will be motivated by runtime analysis of existing convolutional computation units (CCUs) on diverse CNN architectures and FPGA resources. Our composer will then be used in Keras Synthesized, a framework that generates high-level synthesis (HLS) code from trained CNNs.
- 
-\begin{itemize}
-\item It describes the use of a specialized
-macro package developed specifically for thesis production
-at the University.
-The macros customize \LaTeX\ for the correct thesis style,
-allowing the student to concentrate on the substance of
-his or her text.%
-\footnote{See Appendix A to obtain the source to this
- thesis and the class file.}
-\item It demonstrates the solutions to a variety of
-formatting challenges found in thesis production.
-\item It serves as a template for a real dissertation.
-\end{itemize}
+Deep learning continues to be the revolutionary method used in pattern recognition applications including image, video, and speech processing. Convolutional Neural Networks (CNNs) in particular have outperformed every competitor in image classification benchmarks, but suffer from high computation and storage complexities. It is becoming more apparent to extend this breakthrough technology to embedded applications that demand low power and mission critical response times. Consequently, embedded CNNs deployed on the edge require compact platforms capable of accelerated computing. Field Programmable Gate Arrays (FPGAs) have recently been explored to satisfy these needs. However, their varying number of resources introduces the problem of how to create an optimal ASIC design of a CNN that maximizes hardware utilization and energy efficiency to support real-time applications. Previous works have explored methods to optimize convolution computation within FPGAs. Many of which only consider supporting a single CNN architecture. While this approach allows precise optimizations structured around a specific CNN, it restricts the FPGA from updating its model without tremendous compile times upwards to hours. For applications on the edge, this much downtime can be a deal breaker. In this work, we explore state-of-the-art reconfigurable CNN-FPGA architectures and implement our own using the Intel High-Level-Synthesis (HLS) Compiler which allows various input sizes. While our results yield poor performance, we show how the time-to-code and implications of a better optimized reconfigurable CNN-FPGA architecture can make a significant impact on deployments of CNNs in edge environments.
 }
+%\begin{itemize}
+%\item It describes the use of a specialized
+%macro package developed specifically for thesis production
+%at the University.
+%The macros customize \LaTeX\ for the correct thesis style,
+%allowing the student to concentrate on the substance of
+%his or her text.%
+%\footnote{See Appendix A to obtain the source to this
+% thesis and the class file.}
+%\item It demonstrates the solutions to a variety of
+%formatting challenges found in thesis production.
+%\item It serves as a template for a real dissertation.
+%\end{itemize}
+%}
