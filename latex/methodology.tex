@@ -1,6 +1,13 @@
-\chapter{Methodology}
-\section{Implementation}
-Each CCU is written and tested in C for compilation via the Intel HLS Compiler. Our code is structured such that its logic mimics what is found in their original implementations to the best of our ability. Subsequent diagrams do not have a one-to-one correspondance with their actual hardware implementation due to the HLS translation. Floating point quantization is set to 16 bit precision throughout all implementations.
+\chapter{System Design}
+\section{Architecture}
+Our CCU component computes a single channel's worth of convolution. This allows CCUs to be arranged for a variety of ways that exploits the parallel nature of convolution.
 
-\section{Benchmarking}
-Experiments are performed using the ModelSim FPGA simulator. Each benchmark is ran using artifical data with input dimensionality and kernel sizes set to estimate the full performance of a CNN-FPGA implementation. We measure the number of cycles it takes for each component to run from start-to-finish, and use the simulated clock speed to output a runtime.
+% DIAGRAM REGARDING inter vs intra convolution
+
+Our work focuses primarily on the acceleration of a CCU. Future work could explore how the arrangement of CCUs can affect memory access latencies.
+
+\section{Environment and Experimental Results}
+We implement our reconfigurable CCU against the Intel HLS Compiler. Benchmarks and correctness tests are obtained and verified using the ModelSim FPGA simulator. Each benchmark is ran using artificial data with input dimensionality and kernel sizes set to respective layer sizes from CNN architectures. Subsequent diagrams do not have a one-to-one correspondence with their actual hardware implementation due to the HLS translation. Floating point quantization is set to 16 bit precision throughout all implementations.
+
+% ADD PART REGARDING MODEL SIM FPGA PARAMS LIKE MAKE, ETC
+
