@@ -10,7 +10,7 @@
 
 Our CCU component computes a single channel's worth of convolution. \ref{ccuparallelism} shows how channel-wise parallelism can be oriented to either reuse inputs, outputs, or be entirely independent. In the case of reusing inputs, a mechanism must be in place to insure atomic updates are made to the output layer to prevent concurrent CCUs from overwriting values. In conjunction with one of these orientations, channel computation can be iterated to reuse existing input channels for different kernels altogether, continue on the kernel's next channel to complete the current output layer, or reuse the same kernel on a different input within a mini-batch. Input and kernel sizes could drastically impact memory latencies for each orientation. Our work focuses primarily on the acceleration of a single reconfigurable CCU. Thus, we leave the exploration of CCU parallelism slated for future work.
 
-The logic of our reconfigurable CCU component is depicted in \ref{convolver}. Note that subsequent diagrams do not have a one-to-one correspondence with their actual hardware implementation due to the HLS translation. We use a sliding window mechanism similar to \cite{liu2016automatic} with the exception that ours is reconfigurable for any sized input, with a fixed kernel size of three. We choose three because its one of the more popular kernel sizes (REF NEEDED). We can compute convolution for different sized kernels using a technique similar to \cite{guo2018angel} where they pad outer weights with zero for smaller kernels and perform multiple convolutions using subsets and zero-padding for larger kernels.
+The logic of our reconfigurable CCU component is depicted in \ref{convolver}. Note that subsequent diagrams do not have a one-to-one correspondence with their actual hardware implementation due to the HLS translation. We use a sliding window mechanism similar to \cite{liu2016automatic} with the exception that ours is reconfigurable for any sized input, with a fixed kernel size of three. We choose three because its one of the more popular kernel sizes. We can compute convolution for different sized kernels using a technique similar to \cite{guo2018angel} where they pad outer weights with zero for smaller kernels and perform multiple convolutions using subsets and zero-padding for larger kernels.
 
 We first load three rows from external RAM into the input data buffer, implemented in on-chip RAM. Its size is set to fit three of the largest input layer's rows, which consequently wastes BRAM resources when computing smaller layers. A sliding 3x3 window then strides along the rows, loading the current values within the window into registers to multiply and accumulate them with the kernel weights into the output buffer. Once the three rows are complete, we transfer the output buffer data to external RAM.
 
@@ -25,13 +25,14 @@ We first load three rows from external RAM into the input data buffer, implement
 
 
 \section{Environment and Experimental Results}
-We implement our reconfigurable CCU using the Intel HLS Compiler specifically for the Cyclone V. Benchmarks and correctness tests are obtained and verified using the ModelSim FPGA simulator. Each benchmark is ran using artificial data with input dimensionality, padding, and kernel sizes set to respective layer sizes from the VGG-16 architecture. Floating point quantization is set to 16 bit precision throughout all benchmarks. For OPs, we consider only multiplies and accumulates and take into account the padding. We compute GOP/s by fixing the clock speed to 100 MHz.
+We implement our reconfigurable CCU using the Intel HLS Compiler, and compile for the Cyclone V FPGA. Benchmarks and correctness tests are obtained and verified using the ModelSim FPGA simulator. Each benchmark is ran using artificial data with input dimensionality, padding, and kernel sizes set to respective layer sizes from the VGG-16 architecture. Floating point quantization is set to 16 bit precision throughout all benchmarks. For OPs, we consider only MACs and take into account the padding. We compute GOP/s by fixing the clock speed to 100 MHz.
 
-Results show our CCU's performance scales near-consistent for input sizes greater than 28. Smaller input sizes pay the penalty of refilling the input data buffer more frequently, shortening the phase of pipelined convolution. 
+Results shown in \ref{result_1} show our CCU's performance scales near-consistent for input sizes greater than 28. Smaller input sizes pay the penalty of refilling the input data buffer more frequently, shortening the phase of pipelined convolution. In addition, larger input sizes suffer in performance by reloading large rows into the input data buffer multiple times. Comparison to other related works in \ref{result_others} shows our results are significantly slower.
 
 
 \begin{figure}
 \centering
+\small
 \begin{tabular}{ |p{3cm}|p{3cm}|p{3cm}|p{3cm}|  }
 	\hline
 	\multicolumn{4}{|c|}{3x3 Convolution, Single Channel, Padding=1, Stride=1, 100 MHz} \\
@@ -51,6 +52,24 @@ Results show our CCU's performance scales near-consistent for input sizes greate
 \caption{Benchmarks of our sliding window CCU}
 \end{figure}
 
+\begin{figure}
+	\centering
+	\small
+	\begin{tabular}{ |p{1.5cm}|p{3cm}|p{3cm}|p{3cm}|  }
+		\hline
+		Ref & Data Format & GOP/s & FPGA\\
+		\hline
+		ours & FP16      & 0.111      & Cyclone V \\
+		\cite{aydonat2017opencl} & FP16      & 1382      & GX 1150 \\
+		\cite{zhang2017frequency}  & FP32     & 123.5    & Stratix V \\
+		\cite{zhang2017improving}  & FP32     & 866    & GX 1150 \\
+		\cite{zhang2015optimizing}  & FP32    & 61.62    & XC7VX485T \\
+		\cite{guan2017fpga}  & FP32   & 7.26  & XC7VX485T\\
+		\hline
+	\end{tabular}
+	\label{result_others}
+	\caption{Benchmark Comparison to Related Works}
+\end{figure}
 
 % ADD PART REGARDING MODEL SIM FPGA PARAMS LIKE MAKE, ETC
 
