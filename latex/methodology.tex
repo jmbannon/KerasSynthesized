@@ -16,6 +16,7 @@ We first load three rows from external RAM into the input data buffer, implement
 
 
 \begin{figure}
+	\centering
 	\includegraphics[scale=0.35]{ConvolverDiagram}
 	\caption[Convolver Diagram]%
 	{\narrower Sliding window CCU with a 3x3 kernel. Loads three rows into RAM and performs a sliding window to load values into registers and compute the convolution.}
@@ -30,22 +31,26 @@ Results show our CCU's performance scales near-consistent for input sizes greate
 
 
 \begin{figure}
-\begin{tabular}{ |p{3cm}|p{3cm}|p{3cm}|p{3cm}|p{3cm}|  }
+\centering
+\begin{tabular}{ |p{3cm}|p{3cm}|p{3cm}|p{3cm}|  }
 	\hline
-	\multicolumn{5}{|c|}{3x3 Convolution, Single Channel, Padding=1, Stride=1, 100 MHz} \\
+	\multicolumn{4}{|c|}{3x3 Convolution, Single Channel, Padding=1, Stride=1, 100 MHz} \\
 	\hline
-	Len & Wid & Cycles & OPs & GOP/s \\
+	Size & Cycles & OPs & GOP/s \\
 	\hline
-	7      & 7    & 1433      & 882      & 0.062\\
-	14    & 14   & 3938     & 3528    & 0.09 \\
-	28   & 28   & 10174    & 14112    & 0.139\\
-	56   & 56   & 42568   & 56448  & 0.133\\
-	112  & 112  & 172815  & 225792 & 0.131 \\
-	224 & 224 & 812774  & 903168 & 0.111\\
+	7x7       & 1433      & 882      & 0.062\\
+	14x14    & 3938     & 3528    & 0.09 \\
+	28x28   & 10174    & 14112    & 0.139\\
+	56x56   & 42568   & 56448  & 0.133\\
+	112x112  & 172815  & 225792 & 0.131 \\
+	224x224 & 812774  & 903168 & 0.111\\
 	
 	\hline
 \end{tabular}
+\label{result_1}
+\caption{Benchmarks of our sliding window CCU}
 \end{figure}
+
 
 % ADD PART REGARDING MODEL SIM FPGA PARAMS LIKE MAKE, ETC
 
